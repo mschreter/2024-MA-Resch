@@ -1,0 +1,767 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% template for student thesis, Oct 2019
+% 1.version: Keijo Nissen
+% 2.version: Hamman de Vaal
+% 3.version: Caroline Danowski & Keijo Nissen
+% 4.version: Barbara Wirthl
+%
+%
+% build document e.g. in console with
+%    latex <file_name> && dvipdfm <file_name>
+%    
+% if warning "undefined references", add to bib-file and run
+%    bibtex <file_name>
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% template for DIN A4
+\documentclass[12pt,a4paper]{article}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% DETAILS ON THESIS - TO BE FILLED !!! %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\thesistype}{TypeOfThesis}
+\newcommand{\thesistitle}{\LaTeX-template for LNM theses}
+\newcommand{\shorttitle}{\LaTeX-template for LNM theses}
+\newcommand{\Author}{AuthorName}
+\newcommand{\Supervisor}{SupervisorName}
+\newcommand{\DateOfSubmission}{01.01.2001}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% LEAD UP %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% packages that should be included - extend at will
+\usepackage{fancyhdr}
+\usepackage{mdwlist}
+\usepackage{dsfont}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{ifthen}
+%\usepackage{epstopdf}
+%\epstopdfsetup{update} % only regenerate pdf files when eps file is newer
+% \usepackage{ngerman} % if in German; provides German hyphenation and direct use of umlauts
+
+% suggested math abbreviations - extend at will
+\renewcommand{\vec}[1]{\boldsymbol{#1}}         % for vectors
+\newcommand{\mat}[1]{\boldsymbol{#1}}           % for matrices
+
+\newcommand{\dd}{\mathrm{d}}                    % differential d
+\newcommand{\pd}{\partial}                      % partial differentiation d
+
+\newcommand{\tsum}{{\textstyle\sum\limits}}     % for small sums in large equations
+\newcommand{\pfrac}[2]{\frac{\pd #1}{\pd #2}}   % \pfrac{f(x,y)}{x} for partial derivative of f(x,y) with respect to x
+\renewcommand{\dfrac}[2]{\frac{\dd #1}{\dd #2}} % \dfrac{f(x,y)}{x} for total derivative of f(x,y) with respect to x
+\newcommand{\grad}{\nabla}                      % for the gradient
+\newcommand{\norm}[1]{\| #1 \|}                 % \norm{x} for the norm of x
+\newcommand{\abs}[1]{| #1 |}                    % \abs{x} for the absolute value of x
+
+% suggested text abbreviations - extend at will
+\newcommand{\comment}[1]{ }  % put aroung regions that are not to be compiled
+
+%
+\newcommand{\insertblankpage}{\mbox{}\thispagestyle{empty}\addtocounter{page}{-1}\newpage}
+\newcommand{\BibTeX}{$\mathrm{B{\scriptstyle{IB}} \! T\!_{\displaystyle E} \! X}$}
+
+% source of all figures
+\graphicspath{{./}}
+    % This is the folder where your figures should be. 
+    % You can define more folders by inserting  {./additionalPath/}.
+
+% Leere Fu''llseiten
+\makeatletter
+\renewcommand{\cleardoublepage}{\clearpage\if@twoside \ifodd\c@page\else
+  \hbox{}
+  \vspace*{\fill}
+  \thispagestyle{empty}
+  \newpage
+  \if@twocolumn\hbox{}\newpage\fi\fi\fi}
+\makeatother
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% page layout %%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% for details see, e.g. ``http://en.wikibooks.org/wiki/LaTeX/Page_Layout''
+\setlength{\topmargin}{0mm}                % space above header (excluding \voffset)
+\setlength{\headheight}{12pt}              % height of header
+\setlength{\headsep}{8mm}                  % distance between header and text
+\setlength{\textheight}{230mm}             % 
+\setlength{\footskip}{10mm}                % distance between text and footer, including footer itself
+
+\setlength{\evensidemargin}{0mm}           % distance to inner edge of left page (if twosided)
+\setlength{\oddsidemargin}{8mm}            % distance to inner edge of right page (or both if onesided)
+\setlength{\textwidth}{150mm}              % 
+\setlength{\marginparsep}{0mm}             % 
+
+\setlength{\voffset}{0mm}                  % 
+\setlength{\hoffset}{0mm}                  % 
+
+% suggested headers and footers
+\pagestyle{fancyplain}
+\fancyhf{}
+\fancyfoot[C]{\fancyplain{}{\bfseries\thepage}}
+\fancyhead[RO]{\fancyplain{}{\Author}}
+\fancyhead[LO]{\fancyplain{}{\thesistype:\ \shorttitle}}
+
+\newenvironment{changemargin}[2]{%
+\begin{list}{}{%
+\setlength{\topsep}{0pt}%
+\setlength{\leftmargin}{#1}%
+\setlength{\rightmargin}{#2}%
+\setlength{\listparindent}{\parindent}%
+\setlength{\itemindent}{\parindent}%
+\setlength{\parsep}{\parskip}%
+}%
+\item[]}{\end{list}}
+
+\usepackage{setspace}
+\usepackage{helvet}
+%\renewcommand{\familydefault}{\sfdefault}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%  	BEGIN DOCUMENT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\pagenumbering{roman}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% title %%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%
+% title page
+\begin{titlepage}
+\thispagestyle{empty}
+\vspace{-1.5cm}
+\includegraphics[height=1.5772cm]{fig/lnm}
+\hfill
+\includegraphics[height=1.5772cm]{fig/tum_text}
+
+\vfill
+
+\begin{center}
+\Huge{\thesistitle}
+\\
+\vspace{0.2cm}
+\LARGE{\Author}
+\\
+\vspace{0.2cm}
+\large{\thesistype}
+\end{center}
+% \vfill
+\vspace{0.1cm}
+%
+% und an diese Stelle kommt ein tolles Bild aus der eigenen Arbeit
+\begin{center}
+\includegraphics[width=10cm]{fig/nilifem}
+\end{center}
+%
+% \vspace{0.1cm}
+\vfill
+%
+\begin{minipage}[c]{1.0\textwidth}
+\centering
+{\large \scshape Supervisor:}\\
+{\Supervisor}\\
+\texttt{supervisorname@tum.de}\\
+\end{minipage}
+%
+\vspace{1cm}\\
+%
+\rule{\textwidth}{1pt}
+%
+\begin{tabular}[t]{l}
+Institute for Computational Mechanics
+\\
+  Prof.\@ Dr.--Ing.\@ W.\ A.\ Wall
+\\
+Technische Universit\"at M\"unchen
+\end{tabular}
+\hfill
+\begin{tabular}[t]{r}
+%   \copyright Lehrstuhl f\"{u}r Numerische Mechanik
+\DateOfSubmission
+\\
+Boltzmannstra\ss e 15
+\\
+85748 Garching b. M\"unchen (Germany)\\
+\end{tabular}
+\rule{\textwidth}{1pt}
+
+\end{titlepage}
+
+% ***************** Deckblatt Fakultaet MW *****************
+
+\cleardoublepage
+\insertblankpage
+\thispagestyle{empty}
+\begin{changemargin}{-1.0cm}{-1.0cm}
+
+\begin{flushright}
+	\includegraphics[width=20mm]{fig/tum.png}
+\end{flushright}
+\vspace*{5mm}
+
+{\sffamily
+\Huge {\noindent
+	Titel der Arbeit (deutsch und englisch,\\
+  wenn Volltext englisch, nur englischer Titel\\ 
+  notwendig)}
+
+\vspace*{4cm}
+
+\large {\noindent
+	Wissenschaftliche Arbeit zur Erlangung des Grades \\[1mm]
+	B.Sc./M.Sc. \\[1mm]
+	an der TUM School of Engineering and Design.
+}
+\vspace*{1.5cm}
+
+{%
+\normalsize
+\begin{onehalfspacing}
+\begin{raggedright}
+  \begin{tabular}{ll}
+  	\textbf{Themenstellender} & Univ.-Prof.\@ Dr.-Ing.\@ Wolfgang\ A.\ Wall \\
+  	& Lehrstuhl f\"ur Numerische Mechanik \\[5mm]
+  	\textbf{Betreuer} & Betreuer 1  \\
+  	& (ggf. Betreuer 2) \\[5mm]
+  	\textbf{Eingereicht von} & Martin Mustermann \\
+  	& Musterweg 20 (optional)\\
+  	& 80999 M\"unchen (optional)\\
+  	& + 49 89 123 456 89 (optional)\\[5mm]
+	\textbf{Eingereicht am} & \DateOfSubmission in Garching bei M\"unchen \\
+\end{tabular}
+\end{raggedright}
+\end{onehalfspacing}
+}
+}
+\end{changemargin}
+% *********************** Thesis Declaration **********************
+\begin{changemargin}{-1.0cm}{-1.0cm}
+\cleardoublepage
+\insertblankpage
+\raggedright
+\begin{flushright}
+	\includegraphics[width=20mm]{fig/tum.png}
+\end{flushright}
+
+\vspace*{1.5cm}
+
+{\LARGE \textsf{\textbf{\noindent 
+		Erkl\"arung }}}
+\thispagestyle{empty}
+\vspace*{1.5cm}
+
+\begin{onehalfspacing}
+\begin{raggedright}
+\textsf{\noindent
+Ich versichere hiermit, dass ich die von mir eingereichte Abschlussarbeit selbstst\"andig verfasst
+und keine anderen als die angegebenen Quellen und Hilfsmittel benutzt habe.}
+
+\vspace{1.5cm}
+\flushleft
+\rule[-0,5cm]{\textwidth}{0,5pt}
+\flushleft
+\textsf{(Ort, Datum, Unterschrift)}
+\end{raggedright}
+\end{onehalfspacing}
+
+\end{changemargin}
+
+% % Old version of English declaration
+
+%   Hereby I confirm that this is my own work and I referenced all sources and
+%   auxiliary means used and acknowledged any help that I have received from
+%   others as appropriate.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Acknowledgement
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\insertblankpage
+\section*{Acknowledgement}
+If desired.
+
+% falls Arbeit in DEUTSCH verfasst werden soll
+% \section*{Danksagung}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Abstract
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\insertblankpage
+\section*{Abstract}
+The abstract should be provided in German and English.
+
+% falls Arbeit in DEUTSCH verfasst werden soll
+% \section*{Zusammenfassung}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Table of content
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\insertblankpage
+\tableofcontents
+
+\comment{
+% add lists as required - ask your supervisor
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% List of figures
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\insertblankpage
+\listoffigures
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% List of tables
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\insertblankpage
+\listoftables
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% List of symbols
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\insertblankpage
+\section*{List of Symbols}
+% either by hand or find fancy macro and let me know :o)
+or
+% \section*{Nomenclature}
+
+% falls Arbeit in DEUTSCH verfasst werden soll
+% \section*{Nomenklatur} or
+% \section*{Bezeichnungen, Abk\"urzungen, Vereinbarungen}
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% CONTENT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\insertblankpage
+
+\pagenumbering{arabic}
+
+\setboolean{@twoside}{true} 
+\fancyhead[RO,LE,LO]{\fancyplain{}{}}
+\fancyhead[CE]{\fancyplain{}{\leftmark}}
+\fancyhead[CO]{\fancyplain{}{\rightmark}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{sec:intro}
+
+The purpose of this document is two-fold:\\
+Firstly, this is a plain and simple template with the most basic
+\LaTeX-commands and structures introduced that are needed for writing a thesis
+in \LaTeX. It should be sufficient for 95\% of the theses submitted at LNM -
+this means that completeness is not claimed. It is recommended to stick to
+these basic suggestions, knowing that other - possibly better - philosophies
+or styles exist. In case a more complex structure is needed, refer to
+literature or the web, although you should think twice about introducing a
+much more complex structure. \\ 
+Secondly, this report gives some basic suggestions on what the structure of
+the report should look like and also some brief description about typically
+expected content.
+\newline
+\textbf{Please note}: 
+\begin{itemize}
+ \item Significant changes to the document style, layout and structure should only be done according to prior agreement with your supervisor.
+ \item compile the template with the following command \\
+ \verb!latex LaTeX_template_v03.tex && dvipdfm LaTeX_template_v03.dvi!
+ \item if warning ``undefined references'' is thrown, include references in \BibTeX-file
+   and run command \\
+ \verb!bibtex LaTeX_template_v03!
+\end{itemize}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 2
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+% \insertblankpage
+\section{Fundamentals of \LaTeX I: structure}
+\label{sec:struct}
+
+\subsection{Sections}
+\label{sec:sec}
+The following section type may be used:
+
+\begin{verbatim}
+  \section[TitleInTOC]{FullTitle}\label{sec:SectionLabel}
+  \subsection[TitleInTOC]{FullTitle}\label{sec:SubsectionLabel}
+  \subsubsection[TitleInTOC]{FullTitle}\label{sec:SubsubsectionLabel}
+\end{verbatim}
+If case you need even more structure depth, you can also use
+
+\begin{verbatim}
+  \paragraph{Title}
+  \subparagraph{Title}.
+\end{verbatim}
+However, you cannot reference (sub-)paragraphs. Think about whether you really
+need them or if changing the structure might be better. Making it less complex
+usually makes it easier to read (and write!).
+
+It is recommended to write special characters like the German \ss, \"a,
+\"o, \"u, etc. in \TeX-code without any packages, i.e. \verb!\ss!, \verb!\"a!,
+\verb!\"o!, and \verb!\"u!. This in general prevents difficulties if somebody
+else is compiling parts of your work who might not use those packages. You
+will quickly get used to it!
+
+\subsection{Floats}
+\label{sec:float}
+
+
+\subsubsection{Figures}
+\label{sec:fig}
+
+Figures are to be included in the float environment \verb!\figure! as follows
+
+\begin{verbatim}
+  \begin{figure}[placement specifier]
+    \centering
+    \includegraphics[width=0.3\textwidth]{NameOfGraphic}
+    \caption{Description of graphic.}
+    \label{fig:GraphicLabel}
+  \end{figure}.
+\end{verbatim}
+
+The size of the graphic (height or width) should be defined relative to the
+textheight or -width, respectively. Two figures next to each other are
+included by 
+
+\begin{verbatim}
+  [...]
+  \includegraphics[width=0.3\textwidth]{NameOfGraphic_1}~
+  \includegraphics[width=0.3\textwidth]{NameOfGraphic_2}
+  [...],
+\end{verbatim}
+where as figures on top of each other are included by
+
+\begin{verbatim}
+  [...]
+  \includegraphics[width=0.3\textwidth]{NameOfGraphic_1}\\
+  \includegraphics[width=0.3\textwidth]{NameOfGraphic_2}
+  [...].
+\end{verbatim}
+
+The placement specifier defines where the figure should be placed
+\emph{approximately}. This can be \verb!h!, \verb!t!, \verb!b!, or \verb!p!
+which stands for \verb!here!, \verb!top of page!, \verb!bottom of page!, or
+\verb!own page for floats!. In 90\% of the cases, \LaTeX~knows best where to
+put the floats - leave it out. Trying to put the figures exactly where you
+want to put them using \verb!h! is a time waster and counts as
+procrastination. The history of students - including me - trying to be smarter
+than \LaTeX~is as old as \LaTeX~itself - if not older. Nobody succeeded. 
+If you do decide to use it after all, try it right before printing the (very, very) final version.
+
+Note that no endings should be set to the graphic's name. Compiling with
+\verb!latex! will automatically choose vector graphics with this name, in
+contrast to \verb!pdflatex! that will include raster graphics. Let
+\LaTeX~choose the appropriate format - just make sure that you provide a
+graphic of an appropriate format in the given graphic path (see "Lead up" in
+header file).
+
+\subsubsection{Tables}
+\label{sec:tab}
+
+Similar to section \ref{sec:fig}, tables are to be included in a float
+environment, namely \verb!table!, as follows:
+
+\begin{verbatim}
+  \begin{table}[placement specifier]
+    \begin{tabular}{rcl}
+      line 1 column 1 & column 2 $ column 3\\
+      line 2 column 1 & column 2 $ column 3
+    \end{tabular}
+    \caption{Description of table.}
+    \label{tab:TableName}
+  \end{table}
+\end{verbatim}
+
+\verb!rcl! stands for \verb!right!, \verb!center!, and \verb!left! and
+referres to the alignment of the column. "\verb!|!" inbetween will separate
+the columns by a vertical line. \verb!\hline! after, e.g. \verb!\\! inserts a
+horizontal line after the line (see also table \ref{tab:labelspec}
+below). \LaTeX-tables are far from perfect if your table gets a bit more
+complex, e.g. when inserting bigger equations. Formatting tables to someones
+total satisfaction can be very tricky and trying to be too fancy is again
+mostly a time waster. Keep it simple!
+
+\subsection{Equations}
+\label{sec:eq}
+
+Equations with numbering should be included by the \verb!align! environment
+like this
+\begin{verbatim}
+  \begin{align}\label{eq:EquationName}
+    f(x) := \exp(x) &= \sum_{n=0}^{\infty} \frac{x^{n}}{n!} \nonumber \\
+                    &\approx 1 + x + \frac{x^{2}}{2} + \frac{x^{3}}{6}
+  \end{align}
+\end{verbatim}
+for
+~
+\begin{align}\label{eq:EquationName}
+  f(x) := \exp(x) &= \sum_{n=0}^{\infty} \frac{x^{n}}{n!} \nonumber \\
+                  &\approx 1 + x + \frac{x^{2}}{2} + \frac{x^{3}}{6}.
+\end{align}
+
+Use \verb!\\! to insert a multiline equation. Use \verb!&! to align those 
+to each other as shown. It defines one \verb!rl!-aligned pair, which means that
+everything that stands on the left of \verb!&! will be right align and vice
+versa.  The equation itself will be centered. Use \verb!\nonumber! to surpress
+the numbering of certain lines as shown. If no numbering is wanted use
+\verb!align*! and leave out the label. Look on the web for more complex
+alignments - see also the \verb!alignat!-environment that could be used
+alternatively. Use it scarcely. \verb!align! is powerfull and easy to use; it
+should be used most (meaning 99\%) of the times.
+
+Objects like vectors, matrices, and similar things should be formated
+consistently using a dedicated command defined in the beginning of youe
+\LaTeX-file. See for instance above the definition of \verb!\vec! for writing
+a vector $\vec{x}$. Thus, you can also read your equations in \LaTeX-code more
+easily. Additionally the nomenclature of an object is changed by
+changing only one line in your header. 
+
+It is recommended to insert sub- and superscript as well as any manipulation of
+symbold like \verb!\hat! etc. by using \verb!{}! even when only one symbol is
+manipulated, e.g. \verb!\hat{\vec{x}}_{i}! for $\hat{\vec{x}}_{i}$. It's good
+coding and can otherwise also be an ever recurring source of typos and
+compilation errors.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 3
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\section{Fundamentals of \LaTeX II: referencing}\label{sec:referencing}
+
+\subsection{Sections, equations, figures, and tables}
+\label{sec:refseceq}
+
+Everything that can be referenced should have a label. Otherwise use the
+non-referenceable version, e.g. the \verb!align*! environment instead of
+\verb!align!. This also means every proper section of your thesis should have a
+label. Furthermore, every equation that has a number should be important
+enough to be referenced and thus gets a label. Sometimes this can also be a
+sentence like ``Equation (4) states the key result of this section.'' to
+emphasise its importance. If the equation is not referenced, it is not
+important and should not even have a number - use \verb!align*!. Figures and
+tables always have a label und should always be referenced at least
+once. Some readers don't look at them before they are referenced in the
+text. Of course, things that cannot be referenced should
+never have a label. 
+
+The label should have a certain structure and start with a specifier
+according to the object it references, followed by a colon and the actual name
+of the label. An example would be \verb!\label{sec:intro}! for the label of
+the first section ``Introduction''. The specifiers are given in table
+\ref{tab:labelspec}. Referencing a labelled objects is done by the command
+\verb!\ref!, e.g. \verb!\ref{sec:intro}!. Equations should always be
+referenced by \verb!\eqref!, which automatically puts the brackets around the
+equation number (comes with an ams-package already included in this
+template).
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|l|l|}\hline
+    \bf object & \bf specifier \\\hline
+    (sub-)section & sec\\
+    equation & eq\\
+    figure & fig\\
+    table & tab\\ 
+    (appendix) & (app)\\ \hline
+  \end{tabular}
+  \caption{Object specifiers for labels.}
+  \label{tab:labelspec}
+\end{table}
+
+\subsection{Citations}
+\label{sec:cite}
+
+For citations you have to use \BibTeX. For citing a reference, you use
+\verb!\cite{LabelOfRef}! As label, it is suggested to use the surname of the
+first author, directly followed by the year, and, if there is more than one
+publication of that author in the that year, a lowercase letter in
+alphabetical order. For instance: \verb!\cite{Brooks1982}! for article
+\cite{Brooks1982}. Others might prefer other systems, which is fine as long
+as it is consistent. If you use only a few references, adding them by hand to
+your \BibTeX-file seems the easiest. If there are more references you
+might want to create your \BibTeX-file by a reference software like Jabref.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 4
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\section{The actual structure of your report} %Your new development/method/finding
+\label{sec:developments}
+
+This section is added to show what the complete structure of your thesis
+might look like. Coincidentally, this is also the typical structure of a
+scientific report, and hence important to know anyway. The typical sections
+are discussed below, but some specifics might vary according to the type of
+research project. Please discuss the actual structure of your thesis with your
+supervisor. 
+
+\subsection{Abstract}
+\label{sec:Abstract}
+This is the most often read section. It will determine if someone actually
+bothers to read more of what you've written. Only write this section after you
+have completed your report. The abstract consist of only one paragraph, mostly
+limited to 200-300 words. Literally, a summary of your work. Write a sentence
+or two about each of the main sections of your report, as discussed in this
+section. When summarizing results, make the reader aware of the most important
+results (including numbers when applicable) and important conclusions or
+questions that follow from these.
+
+
+\subsection{Introduction}
+\label{sec:Introduction}
+The objective of writing this section is to introduce the reader to
+the problem and also show that you understand the problem statement
+in the context of current knowledge in the field.
+
+Any problem in science can be introduced by simply including the following
+sections:
+\begin{enumerate}
+\item Give background about the problem you are investigating. 
+\item Describe what has been done up to now to address this problem (and
+also refer to the literature in which this work has been done). 
+\item State the objective for taking on the current study or the hypothesis
+that will be tested in the current study. 
+\item Provide a single paragraph of the contents of the rest of the article
+(focusing on that which is reported in \textquotedblleft{}Materials and Methods\textquotedblright{},
+\textquotedblleft{}Results\textquotedblright{}, \textquotedblleft{}Discussion\textquotedblright{}
+and \textquotedblleft{}Conclusions\textquotedblright{}).
+\end{enumerate}
+
+\subsection{Materials and Methods}
+\label{sec:MaterialsAndMethods}
+
+Describe the relevant materials, methods, tools, equipment, software,
+hardware, experimental setup, experimental conditions, general procedures,
+etc. so that someone else can repeat your study or judge the scientific
+merit thereof. Do not describe everything you did, or who did what
+(unless specified or relevant). This section is not a set of instructions! It rather describes the complete methodology used, so that it can be reproduced by someone of similar skill.
+Keep it as concise as possible. Also provide the reader the name of
+the company that produced relevant equipment/software
+used and the country where the company is located.
+
+\subsection{Results}
+\label{sec:Results}
+
+Here you must simply report on the results that you achieved. When
+reporting the results, provide a context to the reader, such as to
+describe the question that was addressed by reporting a specific result.
+Do not interpret any results here \textendash{} leave this for the
+discussion! Do not show the same results in a figure and a table \textendash{}
+choose the one which can best communicate your results. The most important
+aspect(s) of the results reported in a table or figure should be reported
+in the text while also referring to the table or figure. In other
+words, the text should complement the tables and figures. Results
+reported here can be raw data (obtained from instruments), converted
+data (obtained after converting raw data as described in the \textquotedblleft{}Materials
+and Methods\textquotedblright{} section) or applicable numerical examples.
+
+
+\subsection{Discussion}
+\label{sec:Discussion}
+
+Here you must provide an interpretation of your results and support
+for all your conclusions using what you have at your disposal \textendash{}
+your results and generally accepted knowledge, such as published literature
+(if needed). Also describe the significance of your findings clearly.
+Commenting on the methods that you employed might also be relevant. 
+
+If your results agree with what you expected, describe the theory or
+previously described observations that your results delivered. If your results
+do not agree with what expected, explain why this might have happened. A lot
+can be learned from what did not work! You may also deduce alternative
+explanations if reasonable ones exist. Understanding and interpreting what the
+limitations of your study was or what went wrong is crucial for the general
+increase of scientific knowledge -- and of course your own knowledge. Do not
+neglect this aspect of your discussion. Do not just dismiss your results as
+useless or inconclusive if it does not clearly align with your initially
+stated objective/hypothesis. Since you were doing very good scientific
+research, appropriately report on the limitations of your study, so that
+these limitations do not come across as shortcomings, thereby deeming your
+work of lower quality. Therefore, attempt to end your discussion section by
+motivating the significance of your results, even if your results have been
+shown to not be statistically significant/aligned with the initial
+objectives. 
+
+
+\subsection{Conclusions}
+\label{sec:Conclusions}
+
+Concluding remarks should naturally come from the discussion described
+above. This is the \emph{Grand Finale} of your report. This section consists
+of 2 parts at most. In the first part, repeat your most important finding. The
+last part should suggest existing challenges, potential future directions or
+recommendations for further studies. Keep it concise!
+
+
+\subsection{References}
+\label{sec:References}
+
+In all of the sections prior to this section, a citation is made in the text
+which refers to a reference -- i.e. a source where this information comes
+from. The full details of these references are then listed in the this section
+-- the references. 
+
+
+Different styles of citation and accompanying referencing exist. The style
+refers to the order in which the author names are listed, information of the
+cited reference to be listed both in the text and also in the references
+section, formatting, punctuation etc., which should be consistently used
+throughout the report. The style to be used depends on the type of
+publication, e.g. book, journal, report, newspaper article, website.
+
+For your report to be submitted to LNM, you must use the numerical system when
+you use any references in your work. This system of referencing basically
+consist of placing a number in-text (starting at ``1'', of course) next to
+where you want to indicate a reference.  This reference is then fully
+described in the ``References'' section. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Beginn des Anhangs %%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\appendix{}
+\section{First Appendix}
+% \newpage
+\section{Second Appendix}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Literaturverzeichnis %%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+
+%%
+%% BibTeX users:
+\bibliographystyle{plain}
+\bibliography{template.bib}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% END DOCUMENT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
