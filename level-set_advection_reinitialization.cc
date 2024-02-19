@@ -52,6 +52,9 @@
 #include "smoothness_indicator.h"
 #include "preconditioner.h"
 
+#include "one-step-theta.h"
+
+
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -791,6 +794,8 @@ namespace LevelSet
 
     double
     compute_time_step_advection() const;
+
+    void apply_advection_operator( LinearAlgebra::distributed::Vector<Number> &dst, LinearAlgebra::distributed::Vector<Number> const &src) const;
 
   private:
     MatrixFree<dim, Number>                         data;
@@ -2800,6 +2805,20 @@ namespace LevelSet
       return std::min(max_time_step_size_advection, param.courant_number_advection / (std::pow(fe_degree, 2) * max_transport));
   }
 
+template <int dim, int fe_degree>
+void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::distributed::Vector<Number> &dst,
+                                                                 LinearAlgebra::distributed::Vector<Number> const &src) const {
+                                                                  
+  data.loop(&LevelSetOperation<dim, fe_degree>::local_apply_domain,
+            &LevelSetOperation<dim, fe_degree>::local_apply_inner_face,
+            &LevelSetOperation<dim, fe_degree>::local_apply_boundary_face, this,
+            dst, src, true, MatrixFree<dim, Number>::DataAccessOnFaces::values,
+            MatrixFree<dim, Number>::DataAccessOnFaces::values);
+
+  data.cell_loop(
+      &LevelSetOperation<dim, fe_degree>::local_apply_inverse_mass_matrix, this,
+      dst, dst);
+}
 
 
   class LowStorageRungeKuttaIntegrator
@@ -3439,6 +3458,8 @@ namespace LevelSet
                      level_set_operator.get_viscosity_value()  *
                      std::pow(fe_degree, 4) / (glob_min_vertex_distance * glob_min_vertex_distance));
 
+    const OneStepTheta implicit_time_stepping(level_set_operator, solution);
+
     ////////////////////////////////////////////////////////////////////////
     ///////////////////////////// Time loop ////////////////////////////////
     ////////////////////////////////////////////////////////////////////////
@@ -3471,13 +3492,16 @@ namespace LevelSet
             time_step_advection = param.FINAL_TIME - time;
           }
 
-          time_integrator.perform_time_step(level_set_operator,
-                                            time,
-                                            time_step_advection,
-                                            solution,
-                                            rk_register_1,
-                                            rk_register_2,
-                                            computing_timer);
+          //time_integrator.perform_time_step(level_set_operator,
+          //                                  time,
+          //                                  time_step_advection,
+          //                                  solution,
+          //                                  rk_register_1,
+          //                                  rk_register_2,
+          //                                  computing_timer);
+
+          implicit_time_stepping.UpdateBuffers(solution);
+          implicit_time_stepping.perform_time_step(time_step_advection, solution);
         }
 
         if(param.use_gradient_based_RI_indicator)
