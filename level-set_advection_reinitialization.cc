@@ -1,6 +1,6 @@
 // Level-set advection and reinitialization.
 
-// This file is based on the advection_solver_variable.cc file 
+// This file is based on the advection_solver_variable.cc file
 // of the advection_miniapp repository,
 // see https://github.com/kronbichler/advection_miniapp.
 
@@ -22,7 +22,7 @@
 #include <deal.II/fe/mapping_q_generic.h>
 
 #include <deal.II/grid/grid_generator.h>
-#include <deal.II/grid/grid_out.h> 
+#include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/manifold_lib.h>
 #include <deal.II/grid/tria.h>
@@ -52,15 +52,18 @@
 #include "smoothness_indicator.h"
 #include "preconditioner.h"
 
-#include "one-step-theta.h"
-
-
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
 
-
+#include "levelset_problem_parameters.h"
+#include "operators/operator_data.h"
+#include "operators/advection_operator.h"
+#include "operators/ri_diffusion_operator.h"
+#include "operators/ri_grad_operator.h"
+#include "time_integration/concretization.h"
+#include "operators/reinitilization_operator.h"
 
 // create surface triangulation of the bubble for curvature calculation
 namespace dealii::GridTools
@@ -68,16 +71,16 @@ namespace dealii::GridTools
   template <int dim, typename VectorType>
   void
   create_triangulation_with_marching_cube_algorithm(Triangulation<dim - 1, dim> &tria,
-                                                    const Mapping<dim> &         mapping,
+                                                    const Mapping<dim> &mapping,
                                                     const DoFHandler<dim> &background_dof_handler,
-                                                    const VectorType &     ls_vector,
-                                                    const double           iso_level,
-                                                    const unsigned int     n_subdivisions = 1,
-                                                    const double           tolerance      = 1e-10)
+                                                    const VectorType &ls_vector,
+                                                    const double iso_level,
+                                                    const unsigned int n_subdivisions = 1,
+                                                    const double tolerance = 1e-10)
   {
-    std::vector<Point<dim>>        vertices;
+    std::vector<Point<dim>> vertices;
     std::vector<CellData<dim - 1>> cells;
-    SubCellData                    subcelldata;
+    SubCellData subcelldata;
 
     const GridTools::MarchingCubeAlgorithm<dim, VectorType> mc(mapping,
                                                                background_dof_handler.get_fe(),
@@ -97,228 +100,17 @@ namespace dealii::GridTools
     std::vector<unsigned int> considered_vertices;
 
     // note: the following operation does not work for simplex meshes yet
-    //GridTools::delete_duplicated_vertices(vertices, cells, subcelldata,
-    //considered_vertices);
+    // GridTools::delete_duplicated_vertices(vertices, cells, subcelldata,
+    // considered_vertices);
 
     if (vertices.size() > 0)
       tria.create_triangulation(vertices, cells, subcelldata);
   }
 } // namespace dealii::GridTools
 
-
-
 namespace LevelSet
 {
   using namespace dealii;
-
-  class LevelSetProblemParameters
-  {
-  public:
-
-    static void declare_parameters (ParameterHandler &prm);
-
-    void get_parameters (ParameterHandler &prm);
-
-    ////////////////////////////////////////
-    ////////// General parameters //////////
-    ////////////////////////////////////////
-
-    // Space dimension
-    unsigned int dimension = 2;
-    // 1D-polynomial degree of the elements
-    unsigned int fe_degree = 4;
-    // The initial mesh (consisting of a single square) is refined by
-    // doubling the number of elements for every increase in number. Thus, the
-    // number of elements is given by 2^(dim * n_global_refinements).
-    // If an adaptive mesh refinement is used, n_global_refinements corresponds
-    // to the coarsest element size.
-    unsigned int n_global_refinements = 6;
-    // Number of maximum additional mesh refinement levels
-    unsigned int n_refinement_levels = 2;
-    // Final simulation time
-    double FINAL_TIME = 4.0;
-    // Frequency of output in s
-    double output_tick = 0.2;
-    // Enable or disable writing of result files for visualization with ParaView or VisIt
-    bool print_vtu = true;
-    // Factor for the calculation of the grid refinement and coarsening interval
-    // dt_refinement = factor_refinement_interval * dt_advection
-    unsigned int factor_refinement_interval = 8;
-    // Use adaptive mesh refinement?
-    bool use_adaptive_mesh_refinement = true;
-    // Should the element size in a narrow band around the zero level be constant?
-    // (Might be relevent for applying forces. The computational effort will increase.)
-    bool use_const_element_size_at_interface = false;
-    // Fraction of the reinitialization distance epsilon, which should have constant element
-    // size in the vicinity of the zero level.
-    // (only relevant if use_const_element_size_at_interface = true)
-    double factor_distance_const_element_size_at_interface = 0.15;
-    // Round the edge between the reinitialized region and the outer flat region?
-    bool do_edge_rounding = true;
-    // Test case
-    // 0: 2D/3D bubble vortex
-    // 1: 2D slotted disk
-    // 2: 2D Poiseuille flow (adjust grid to 1x3)
-    // 3: 2D static reinitialization of a circular interface with highly distorted gradient (adjust grid to 2x2)
-    // 4: 2D static reinitialization of a square interface
-    // 5: 2D static reinitialization of multiple interfaces (adjust grid to 2x2)
-    // 6: 2D/3D static reinitialization of two intersecting circles/spheres (adjust grid to 2x2(x2))
-    unsigned int test_case = 0;
-    // Do a static (pure reinitializatin) or dynamic simulation?
-    bool dynamic_sim = true;
-
-    //////////////////////////////////////////
-    ////////// Advection parameters //////////
-    //////////////////////////////////////////
-
-    // Time step calculation for advection, it is updated adaptively
-    // dt_advection = min(courant_number_advection * h / (transport_speed_norm * fe_degree^2)
-    double courant_number_advection = 0.5;
-
-    /////////////////////////////////////////////////
-    ////////// Reinitialization parameters //////////
-    /////////////////////////////////////////////////
-
-    // Perform reinitialization every RI_inverval advection time steps
-    // (only relevant if use_gradient_based_RI_indicator = false)
-    unsigned int RI_interval = 1;
-    // Factor for the calculation of the reinitialization distance
-    // RI_distance = factor_RI_distance * h_max/fe_degree
-    // (Interpretation as number of linear elements based on the coursest cell size)
-    double factor_RI_distance = 6.0;
-    // Safety factor for reinitialization time step calculation
-    // Used for implicit and explicit time discretization for the reinitialization
-    double courant_number_RI = 0.5;
-    // Interior penalty parameter for symmetric interior penalty method for viscous term.
-    // The smoothness of the zero level-set contour and the simulation result quality 
-    // can be considerably improved, if IP>1 is used. However, IP=1 is sufficient for a stable simulation.
-    // If the smoothness of the gradient field is of high importance, use IP>>1, e. g. 100 and IMEX
-    // time discretization.
-    double IP_diffusion = 100.0;
-    // Calculation of the cell-wise required artificial viscosity value: nu = factor_diffusivity * h / N;
-    double factor_diffusivity = 0.25;
-    // Parameters for the calculation of the local required artificial viscosity value
-    double art_diff_k = 2.0;      // ~ threshold
-    double art_diff_kappa = 2.8;  // ~ bandwidth
-    // Parameters for the grid coarsening and refinement
-    double factor_refinement_flag = 0.65;
-    double factor_coarsen_flag = 0.2;
-    // Number of RI pseudo time steps per reinitialization procedure
-    unsigned int RI_steps = 1;
-    // RI quality criteria, has to be adjusted according to the simulation case
-    // (only relevant if use_gradient_based_RI_indicator = true)
-    // general hint: low RI quality requirements: 0.25
-    //               high RI quality requirements: 0.15
-    double RI_quality_criteria = 0.20;
-    // Use gradient based reinitialization indicator?
-    bool use_gradient_based_RI_indicator = true;
-    // Use IMEX time discretization?
-    // (Especally recommended for IP>3 to save computational effort.)
-    bool use_IMEX = true;
-    // Use constant gradient for each reinitialization process to save computational effort?
-    // (Useful expecially in explicit reinitialication time discretization.)
-    bool use_const_gradient_in_RI = false;
-  };
-
-
-
-  void LevelSetProblemParameters::declare_parameters (ParameterHandler &prm)
-  {
-    prm.enter_subsection ("GENERAL");
-    {
-      prm.declare_entry ("DIMENSION", "2", Patterns::Integer());
-      prm.declare_entry ("FE DEGREE", "4", Patterns::Integer());
-      prm.declare_entry ("N GLOBAL REFINEMENTS", "6", Patterns::Integer());
-      prm.declare_entry ("N REFINEMENT LEVELS", "2", Patterns::Integer());
-      prm.declare_entry ("FINAL TIME", "4.0", Patterns::Double());
-      prm.declare_entry ("OUTPUT TICK", "0.2", Patterns::Double());
-      prm.declare_entry ("PRINT VTU", "true", Patterns::Bool());
-      prm.declare_entry ("FACTOR REFINEMENT INTERVAL", "8", Patterns::Integer());
-      prm.declare_entry ("USE ADAPTIVE MESH REFINEMENT", "true", Patterns::Bool());
-      prm.declare_entry ("USE CONST ELEMENT SIZE AT INTERFACE", "false", Patterns::Bool());
-      prm.declare_entry ("FACTOR DISTANCE CONST ELEMENT SIZE AT INTERFACE", "0.15", Patterns::Double());
-      prm.declare_entry ("DO EDGE ROUNDING", "true", Patterns::Bool());
-      prm.declare_entry ("TEST CASE", "0", Patterns::Integer());
-      prm.declare_entry ("DYNAMIC SIM", "true", Patterns::Bool());
-    }
-    prm.leave_subsection ();
-
-    prm.enter_subsection ("ADVECTION");
-    {
-      prm.declare_entry ("COURANT NUMBER ADVECTION", "0.5", Patterns::Double());
-    }
-    prm.leave_subsection ();
-
-    prm.enter_subsection ("REINITIALIZATION");
-    {
-      prm.declare_entry ("RI INTERVAL", "1", Patterns::Integer());
-      prm.declare_entry ("FACTOR RI DISTANCE", "6.0", Patterns::Double());
-      prm.declare_entry ("COURANT NUMBER RI", "0.5", Patterns::Double());
-      prm.declare_entry ("INTERIOR PENALTY DIFFUSION", "100.0", Patterns::Double());
-      prm.declare_entry ("FACTOR ARTIFICIAL VISCOSITY", "0.35", Patterns::Double());
-      prm.declare_entry ("ART DIFF K", "1.8", Patterns::Double());
-      prm.declare_entry ("ART DIFF KAPPA", "3.0", Patterns::Double());
-      prm.declare_entry ("FACTOR REFINEMENT FLAG", "0.65", Patterns::Double());
-      prm.declare_entry ("FACTOR COARSEN FLAG", "0.2", Patterns::Double());
-      prm.declare_entry ("RI STEPS", "1", Patterns::Integer());
-      prm.declare_entry ("RI QUALITY CRITERIA", "0.20", Patterns::Double());
-      prm.declare_entry ("USE GRADIENT BASED RI INDICATOR", "true", Patterns::Bool());
-      prm.declare_entry ("USE IMEX", "false", Patterns::Bool());
-      prm.declare_entry ("USE CONST GRADIENT IN RI", "true", Patterns::Bool());
-    }
-    prm.leave_subsection ();
-  }
-
-
-
-  void LevelSetProblemParameters::get_parameters (ParameterHandler &prm)
-  {
-    prm.enter_subsection ("GENERAL");
-    {
-      dimension = prm.get_integer ("DIMENSION");
-      fe_degree = prm.get_integer ("FE DEGREE");
-      n_global_refinements = prm.get_integer ("N GLOBAL REFINEMENTS");
-      n_refinement_levels = prm.get_integer ("N REFINEMENT LEVELS");
-      FINAL_TIME = prm.get_double ("FINAL TIME");
-      output_tick = prm.get_double ("OUTPUT TICK");
-      print_vtu = prm.get_bool ("PRINT VTU");
-      factor_refinement_interval = prm.get_integer ("FACTOR REFINEMENT INTERVAL");
-      use_adaptive_mesh_refinement = prm.get_bool ("USE ADAPTIVE MESH REFINEMENT");
-      use_const_element_size_at_interface = prm.get_bool("USE CONST ELEMENT SIZE AT INTERFACE");
-      factor_distance_const_element_size_at_interface = prm.get_double("FACTOR DISTANCE CONST ELEMENT SIZE AT INTERFACE");
-      do_edge_rounding = prm.get_bool("DO EDGE ROUNDING");
-      test_case = prm.get_integer ("TEST CASE");
-      dynamic_sim = prm.get_bool ("DYNAMIC SIM");
-    }
-    prm.leave_subsection ();
-
-    prm.enter_subsection ("ADVECTION");
-    {
-      courant_number_advection = prm.get_double ("COURANT NUMBER ADVECTION");
-    }
-    prm.leave_subsection ();
-
-    prm.enter_subsection ("REINITIALIZATION");
-    {
-      RI_interval = prm.get_integer ("RI INTERVAL");
-      factor_RI_distance = prm.get_double ("FACTOR RI DISTANCE");
-      courant_number_RI = prm.get_double ("COURANT NUMBER RI");
-      IP_diffusion = prm.get_double ("INTERIOR PENALTY DIFFUSION");
-      factor_diffusivity = prm.get_double("FACTOR ARTIFICIAL VISCOSITY");
-      art_diff_k = prm.get_double("ART DIFF K");
-      art_diff_kappa = prm.get_double("ART DIFF KAPPA");
-      factor_refinement_flag = prm.get_double("FACTOR REFINEMENT FLAG");
-      factor_coarsen_flag = prm.get_double("FACTOR COARSEN FLAG");
-      RI_steps = prm.get_integer ("RI STEPS");
-      RI_quality_criteria = prm.get_double ("RI QUALITY CRITERIA");
-      use_gradient_based_RI_indicator = prm.get_bool ("USE GRADIENT BASED RI INDICATOR");
-      use_IMEX = prm.get_bool ("USE IMEX");
-      use_const_gradient_in_RI = prm.get_bool ("USE CONST GRADIENT IN RI");
-    }
-    prm.leave_subsection ();
-  }
-
-
 
   // Runge-Kutta time integrator schemes
   enum LowStorageRungeKuttaScheme
@@ -328,11 +120,9 @@ namespace LevelSet
     stage_7_order_4, /* Tselios, Simos, 2007 */
     stage_9_order_5, /* Kennedy, Carpenter, Lewis, 2000 */
   };
-  // Currently, for both the advection and the reinitialization, 
+  // Currently, for both the advection and the reinitialization,
   // the same time integrator scheme is used.
   constexpr LowStorageRungeKuttaScheme lsrk_scheme = stage_5_order_4;
-
-
 
   // Analytical solution of the considered level-set function at initial conditions.
   // The DoF values are determined via projection.
@@ -340,8 +130,9 @@ namespace LevelSet
   class LevelSetFunction : public Function<dim>
   {
   public:
-    LevelSetFunction(const double time, const LevelSetProblemParameters &param): Function<dim>(1, time), param(param)
-    {}
+    LevelSetFunction(const double time, const LevelSetProblemParameters &param) : Function<dim>(1, time), param(param)
+    {
+    }
 
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const override
@@ -356,117 +147,129 @@ namespace LevelSet
       if (dim == 2)
       {
         switch (param.test_case)
-              {
-                case 0:
-                  {
-                    // bubble vortex test case, (domain: [0,1]^2)
-                    return std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.75) * (p[1] - 0.75))-0.15;
+        {
+        case 0:
+        {
+          // bubble vortex test case, (domain: [0,1]^2)
+          return std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.75) * (p[1] - 0.75)) - 0.15;
 
-                    break;
-                  }
-                
-                case 1:
-                  {
-                    // slotted disk test case, (domain: [0,1]^2)
-                    return std::max(std::min(std::min(p[0]-0.475, -(p[0]-0.525)),-(p[1]-0.8)),
-                    std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.75) * (p[1] - 0.75))-0.15);
+          break;
+        }
 
-                    break;
-                  }
-                
-                case 2:
-                  {
-                    // Poiseuille flow test case (channel flow), (domain: [0,3]x[0,1])
-                    return std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.5) * (p[1] - 0.5))-0.35;
+        case 1:
+        {
+          // slotted disk test case, (domain: [0,1]^2)
+          return std::max(std::min(std::min(p[0] - 0.475, -(p[0] - 0.525)), -(p[1] - 0.8)),
+                          std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.75) * (p[1] - 0.75)) - 0.15);
 
-                    break;
-                  }
+          break;
+        }
 
-                case 3:
-                  {
-                    // static reinitialization of a circular interface with highly distorted gradient, (domain: [2,2]^2)
-                    return ((p[0] - 1.) * (p[0] - 1.) + (p[1] - 1.) * (p[1] - 1.) + 0.1) * (std::sqrt(p[0] * p[0] + p[1] * p[1])-1.);
+        case 2:
+        {
+          // Poiseuille flow test case (channel flow), (domain: [0,3]x[0,1])
+          return std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.5) * (p[1] - 0.5)) - 0.35;
 
-                    break;
-                  }
+          break;
+        }
 
-                case 4:
-                  {
-                    // static reinitialization of a square interface (domain: [0,1]^2)
-                    return 0.8 * (std::max(std::abs(p[0]-0.5), std::abs(p[1]-0.5))-0.25);
+        case 3:
+        {
+          // static reinitialization of a circular interface with highly distorted gradient, (domain: [2,2]^2)
+          return ((p[0] - 1.) * (p[0] - 1.) + (p[1] - 1.) * (p[1] - 1.) + 0.1) * (std::sqrt(p[0] * p[0] + p[1] * p[1]) - 1.);
 
-                    break;
-                  }
+          break;
+        }
 
-                case 5:
-                  {
-                    // static reinitialization of multiple interfaces (domain: [-2,2]^2)
-                    const auto d_1 = std::sqrt((p[0]+0.8)*(p[0]+0.8)+(p[1]-0.8)*(p[1]-0.8))-0.15;
-                    const auto d_2 = std::min(std::sqrt((p[0]-0.8)*(p[0]-0.8)+(p[1]-0.8)*(p[1]-0.8))-0.15, d_1);
-                    const auto d_3 = std::min(std::sqrt((p[0]-0.8)*(p[0]-0.8)+(p[1]+0.8)*(p[1]+0.8))-0.15, d_2);
-                    const auto d_4 = std::min(std::sqrt((p[0]+0.8)*(p[0]+0.8)+(p[1]+0.8)*(p[1]+0.8))-0.15, d_3);
+        case 4:
+        {
+          // static reinitialization of a square interface (domain: [0,1]^2)
+          return 0.8 * (std::max(std::abs(p[0] - 0.5), std::abs(p[1] - 0.5)) - 0.25);
 
-                    const auto d_5 = std::min(std::sqrt((p[0]+0.)*(p[0]+0.)+(p[1]-0.8)*(p[1]-0.8))-0.15, d_4);
-                    const auto d_6 = std::min(std::sqrt((p[0]+0.)*(p[0]+0.)+(p[1]+0.8)*(p[1]+0.8))-0.15, d_5);
-                    const auto d_7 = std::min(std::sqrt((p[0]+0.8)*(p[0]+0.8)+(p[1]+0.)*(p[1]+0.))-0.15, d_6);
-                    const auto d_8 = std::min(std::sqrt((p[0]-0.8)*(p[0]-0.8)+(p[1]+0.)*(p[1]+0.))-0.15, d_7);
+          break;
+        }
 
-                    const auto d_9 = std::min(std::sqrt((p[0]+0.4)*(p[0]+0.4)+(p[1]-0.4)*(p[1]-0.4))-0.15, d_8);
-                    const auto d_10 = std::min(std::sqrt((p[0]-0.4)*(p[0]-0.4)+(p[1]-0.4)*(p[1]-0.4))-0.15, d_9);
-                    const auto d_11 = std::min(std::sqrt((p[0]-0.4)*(p[0]-0.4)+(p[1]+0.4)*(p[1]+0.4))-0.15, d_10);
-                    const auto d_12 = std::min(std::sqrt((p[0]+0.4)*(p[0]+0.4)+(p[1]+0.4)*(p[1]+0.4))-0.15, d_11);
+        case 5:
+        {
+          // static reinitialization of multiple interfaces (domain: [-2,2]^2)
+          const auto d_1 = std::sqrt((p[0] + 0.8) * (p[0] + 0.8) + (p[1] - 0.8) * (p[1] - 0.8)) - 0.15;
+          const auto d_2 = std::min(std::sqrt((p[0] - 0.8) * (p[0] - 0.8) + (p[1] - 0.8) * (p[1] - 0.8)) - 0.15, d_1);
+          const auto d_3 = std::min(std::sqrt((p[0] - 0.8) * (p[0] - 0.8) + (p[1] + 0.8) * (p[1] + 0.8)) - 0.15, d_2);
+          const auto d_4 = std::min(std::sqrt((p[0] + 0.8) * (p[0] + 0.8) + (p[1] + 0.8) * (p[1] + 0.8)) - 0.15, d_3);
 
-                    return d_12 * ((p[0]-1.)*(p[0]-1.)+(p[1]-1.)*(p[1]-1.)+0.1);
+          const auto d_5 = std::min(std::sqrt((p[0] + 0.) * (p[0] + 0.) + (p[1] - 0.8) * (p[1] - 0.8)) - 0.15, d_4);
+          const auto d_6 = std::min(std::sqrt((p[0] + 0.) * (p[0] + 0.) + (p[1] + 0.8) * (p[1] + 0.8)) - 0.15, d_5);
+          const auto d_7 = std::min(std::sqrt((p[0] + 0.8) * (p[0] + 0.8) + (p[1] + 0.) * (p[1] + 0.)) - 0.15, d_6);
+          const auto d_8 = std::min(std::sqrt((p[0] - 0.8) * (p[0] - 0.8) + (p[1] + 0.) * (p[1] + 0.)) - 0.15, d_7);
 
-                    break;
-                  }
+          const auto d_9 = std::min(std::sqrt((p[0] + 0.4) * (p[0] + 0.4) + (p[1] - 0.4) * (p[1] - 0.4)) - 0.15, d_8);
+          const auto d_10 = std::min(std::sqrt((p[0] - 0.4) * (p[0] - 0.4) + (p[1] - 0.4) * (p[1] - 0.4)) - 0.15, d_9);
+          const auto d_11 = std::min(std::sqrt((p[0] - 0.4) * (p[0] - 0.4) + (p[1] + 0.4) * (p[1] + 0.4)) - 0.15, d_10);
+          const auto d_12 = std::min(std::sqrt((p[0] + 0.4) * (p[0] + 0.4) + (p[1] + 0.4) * (p[1] + 0.4)) - 0.15, d_11);
 
-                case 6:
-                  {
-                    // static reinitialization of two intersecting circles (domain: [2,2]^2)
-                    return std::min(0.8*(std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.65) * (p[1] - 0.65))-0.2),
-                                    0.8*(std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.35) * (p[1] - 0.35))-0.2));
+          return d_12 * ((p[0] - 1.) * (p[0] - 1.) + (p[1] - 1.) * (p[1] - 1.) + 0.1);
 
-                    break;
-                  }
+          break;
+        }
 
-                default:
-                  AssertThrow(false, ExcNotImplemented());
-              }
+        case 6:
+        {
+          // static reinitialization of two intersecting circles (domain: [2,2]^2)
+          return std::min(0.8 * (std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.65) * (p[1] - 0.65)) - 0.2),
+                          0.8 * (std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.35) * (p[1] - 0.35)) - 0.2));
+
+          break;
+        }
+
+         case 8:
+        {
+          // bubble vortex test case, (domain: [0,1]^2)
+          return std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.75) * (p[1] - 0.75)) - 0.15;
+
+          break;
+        }
+
+        default:
+          AssertThrow(false, ExcNotImplemented());
+        }
       }
-      else if (dim ==3)
+      else if (dim == 3)
       {
         switch (param.test_case)
-              {
-                case 0:
-                  {
-                    // bubble vortex test case (domain: [0,1]^3)
-                    return std::sqrt((p[0] - 0.35) * (p[0] - 0.35) + (p[1] - 0.35) * (p[1] - 0.35) + (p[2] - 0.35) * (p[2] - 0.35))-0.15;
+        {
+        case 0:
+        {
+          // bubble vortex test case (domain: [0,1]^3)
+          return std::sqrt((p[0] - 0.35) * (p[0] - 0.35) + (p[1] - 0.35) * (p[1] - 0.35) + (p[2] - 0.35) * (p[2] - 0.35)) - 0.15;
 
-                    break;
-                  }
+          break;
+        }
 
-                case 6:
-                  {
-                    // static reinitialization of two intersecting spheres (domain: [2,2]^2)
-                    return std::min((std::sqrt((p[0]-0.2) * (p[0]-0.2) + (p[1]-0.2) * (p[1]-0.2) + (p[2]-0.) * (p[2]-0.))-0.4),
-                                 (std::sqrt((p[0]+0.2) * (p[0]+0.2) + (p[1]+0.2) * (p[1]+0.2) + (p[2]+0.) * (p[2]+0.))-0.65)) *
-                                 ((p[0] - 0.3) * (p[0] - 0.3) + (p[1] - 0.3) * (p[1] - 0.3) + (p[2] - 0.3) * (p[2] - 0.3) + 0.5);
+        case 6:
+        {
+          // static reinitialization of two intersecting spheres (domain: [2,2]^2)
+          return std::min((std::sqrt((p[0] - 0.2) * (p[0] - 0.2) + (p[1] - 0.2) * (p[1] - 0.2) + (p[2] - 0.) * (p[2] - 0.)) - 0.4),
+                          (std::sqrt((p[0] + 0.2) * (p[0] + 0.2) + (p[1] + 0.2) * (p[1] + 0.2) + (p[2] + 0.) * (p[2] + 0.)) - 0.65)) *
+                 ((p[0] - 0.3) * (p[0] - 0.3) + (p[1] - 0.3) * (p[1] - 0.3) + (p[2] - 0.3) * (p[2] - 0.3) + 0.5);
 
-                    break;
-                  }
-                
-                default:
-                  AssertThrow(false, ExcNotImplemented());
-              }
+          break;
+        }
+
+        case 7:
+        {
+          // meltpoolartiger einschnitt
+          return p[2] - 0.5;
+        }
+
+        default:
+          AssertThrow(false, ExcNotImplemented());
+        }
       }
     }
 
   private:
     const LevelSetProblemParameters &param;
   };
-
-
 
   // Compute radius
   // (for calculating norm in vicinity of zero-level of a circular interface)
@@ -475,14 +278,14 @@ namespace LevelSet
   {
   public:
     ComputeRadius(const double time,
-                  const double x_center, 
-                  const double y_center, 
-                  const double z_center): 
-    Function<dim>(1, time), 
-    x_center(x_center),
-    y_center(y_center),
-    z_center(z_center)
-    {}
+                  const double x_center,
+                  const double y_center,
+                  const double z_center) : Function<dim>(1, time),
+                                           x_center(x_center),
+                                           y_center(y_center),
+                                           z_center(z_center)
+    {
+    }
 
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const override
@@ -496,11 +299,11 @@ namespace LevelSet
     {
       if (dim == 2)
       {
-        return std::sqrt((p[0]-x_center)*(p[0]-x_center)+(p[1]-y_center)*(p[1]-y_center));
+        return std::sqrt((p[0] - x_center) * (p[0] - x_center) + (p[1] - y_center) * (p[1] - y_center));
       }
       else if (dim == 3)
       {
-        return std::sqrt((p[0]-x_center)*(p[0]-x_center)+(p[1]-y_center)*(p[1]-y_center)+(p[2]-z_center)*(p[2]-z_center));
+        return std::sqrt((p[0] - x_center) * (p[0] - x_center) + (p[1] - y_center) * (p[1] - y_center) + (p[2] - z_center) * (p[2] - z_center));
       }
     }
 
@@ -510,141 +313,192 @@ namespace LevelSet
     const double z_center;
   };
 
-
-
   // Analytical function for the transport speed
   template <int dim>
-    class TransportSpeed : public Function<dim>
-    {
-    public:
-      TransportSpeed(const double time, const LevelSetProblemParameters &param)
+  class TransportSpeed : public Function<dim>
+  {
+  public:
+    TransportSpeed(const double time, const LevelSetProblemParameters &param)
         : Function<dim>(dim, time), param(param)
-      {}
-  
-      virtual double value(const Point<dim> & p,
-                           const unsigned int component = 0) const override;
-    
-    private:
-      const LevelSetProblemParameters &param;
-    };
-
-    template <int dim>
-    double TransportSpeed<dim>::value(const Point<dim> & p,
-                                     const unsigned int component) const
     {
-      const double t = this->get_time();
-  
-            if (dim == 2)
-            {
-              switch (param.test_case)
-              {
-                case 0:
-                  {
-                    // bubble vortex test case
-                    const double factor = std::cos(numbers::PI * t / param.FINAL_TIME);
+    }
 
-                    if (component == 0)
-                    {
-                      return factor * (std::sin(2 * numbers::PI * p[1]) *
-                                          std::sin(numbers::PI * p[0]) *
-                                          std::sin(numbers::PI * p[0]));
-                    }
-                    else if (component == 1)
-                    {
-                      return -factor * (std::sin(2 * numbers::PI * p[0]) *
-                                          std::sin(numbers::PI * p[1]) *
-                                          std::sin(numbers::PI * p[1]));
-                    }
+    virtual double value(const Point<dim> &p,
+                         const unsigned int component = 0) const override;
 
-                    break;
-                  }
+  private:
+    const LevelSetProblemParameters &param;
+  };
 
-                case 1:
-                  {
-                    // slotted disk test case
-                    if (component == 0)
-                    {
-                      return numbers::PI * (0.5 - p[1])/numbers::PI;
-                    }
-                    else if (component == 1)
-                    {
-                      return numbers::PI * (p[0] - 0.5)/numbers::PI;
-                    }
+  template <int dim>
+  double TransportSpeed<dim>::value(const Point<dim> &p,
+                                    const unsigned int component) const
+  {
+    const double t = this->get_time();
 
-                    break;
-                  }
+    if (dim == 2)
+    {
+      switch (param.test_case)
+      {
+      case 0:
+      {
+        // bubble vortex test case
+        const double factor = std::cos(numbers::PI * t / param.FINAL_TIME);
 
-                case 2:
-                  {
-                    // Poiseuille flow test case (channel flow) with modified periodic velocity field
-                    if (component == 0)
-                    {
-                      const double factor = std::sin(numbers::PI * t / param.FINAL_TIME);
-                      return 1.*(1.-(1.-factor)*(p[1]-0.5)*(p[1]-0.5)/(0.5*0.5));
-                    }
-                    else if (component == 1)
-                    {
-                      return 0.;
-                    }
+        if (component == 0)
+        {
+          return factor * (std::sin(2 * numbers::PI * p[1]) *
+                           std::sin(numbers::PI * p[0]) *
+                           std::sin(numbers::PI * p[0]));
+        }
+        else if (component == 1)
+        {
+          return -factor * (std::sin(2 * numbers::PI * p[0]) *
+                            std::sin(numbers::PI * p[1]) *
+                            std::sin(numbers::PI * p[1]));
+        }
 
-                    break;
-                  }
+        break;
+      }
 
-                default:
-                  AssertThrow(false, ExcNotImplemented());
-              }
-            }
-            else if (dim == 3)
-            {
-              switch (param.test_case)
-              {
-                case 0:
-                  {
-                    // bubble vortex test case
-                    const double factor = std::cos(numbers::PI * t / param.FINAL_TIME);
+      case 1:
+      {
+        // slotted disk test case
+        if (component == 0)
+        {
+          return numbers::PI * (0.5 - p[1]) / numbers::PI;
+        }
+        else if (component == 1)
+        {
+          return numbers::PI * (p[0] - 0.5) / numbers::PI;
+        }
 
-                    if (component == 0)
-                    {
-                      return 2. * factor * (std::sin(2 * numbers::PI * p[1]) *
-                              std::sin(2 * numbers::PI * p[2]) *
-                              std::sin(numbers::PI * p[0]) *
-                              std::sin(numbers::PI * p[0]));
-                    }
-                    else if (component == 1)
-                    {
-                      return - factor * (std::sin(2 * numbers::PI * p[0]) *
-                              std::sin(2 * numbers::PI * p[2]) *
-                              std::sin(numbers::PI * p[1]) *
-                              std::sin(numbers::PI * p[1]));
-                    }
-                    else if (component == 2)
-                    {
-                      return - factor * (std::sin(2 * numbers::PI * p[0]) *
-                              std::sin(2 * numbers::PI * p[1]) *
-                              std::sin(numbers::PI * p[2]) *
-                              std::sin(numbers::PI * p[2]));
-                    }
+        break;
+      }
 
-                    break;
-                  }
+      case 2:
+      {
+        // Poiseuille flow test case (channel flow) with modified periodic velocity field
+        if (component == 0)
+        {
+          const double factor = std::sin(numbers::PI * t / param.FINAL_TIME);
+          return 1. * (1. - (1. - factor) * (p[1] - 0.5) * (p[1] - 0.5) / (0.5 * 0.5));
+        }
+        else if (component == 1)
+        {
+          return 0.;
+        }
 
-                default:
-                  AssertThrow(false, ExcNotImplemented());
-              }
-            }
+        break;
+      }
 
-             return 0;
+          case 8:
+    {
+      // Bubble Rotated
+      if (component == 0)
+      {
+        return numbers::PI * 2.0*(0.5 - p[1]);
+      }
+      else if (component == 1)
+      {
+        return numbers::PI * 2.0*(p[0] - 0.5);
+      }
+
+      break;
     }
 
 
+      default:
+        AssertThrow(false, ExcNotImplemented());
+      }
+    }
+    else if (dim == 3)
+    {
+      switch (param.test_case)
+      {
+      case 0:
+      {
+        // bubble vortex test case
+        const double factor = std::cos(numbers::PI * t / param.FINAL_TIME);
 
+        if (component == 0)
+        {
+          return 2. * factor * (std::sin(2 * numbers::PI * p[1]) * std::sin(2 * numbers::PI * p[2]) * std::sin(numbers::PI * p[0]) * std::sin(numbers::PI * p[0]));
+        }
+        else if (component == 1)
+        {
+          return -factor * (std::sin(2 * numbers::PI * p[0]) *
+                            std::sin(2 * numbers::PI * p[2]) *
+                            std::sin(numbers::PI * p[1]) *
+                            std::sin(numbers::PI * p[1]));
+        }
+        else if (component == 2)
+        {
+          return -factor * (std::sin(2 * numbers::PI * p[0]) *
+                            std::sin(2 * numbers::PI * p[1]) *
+                            std::sin(numbers::PI * p[2]) *
+                            std::sin(numbers::PI * p[2]));
+        }
+
+        break;
+      }
+
+      case 7:
+      {
+        // Hagen-Poiseuille flow
+
+        double const mu = 0.01;
+        double const dp_dx = 1.0;
+        double const Radius = 0.15;
+        double const x0 = 0.5;
+        double const y0 = 0.5;
+
+        if (component == 0)
+        {
+          return 0.0;
+        }
+
+        if (component == 1)
+        {
+          return 0.0;
+        }
+
+        if (component == 2)
+        {
+
+          double const delta_x = p[0] - x0;
+          double const delta_y = p[1] - y0;
+          double const r_squared = delta_x * delta_x + delta_y * delta_y;
+
+          if (r_squared <= (Radius * Radius))
+          {
+            return 1.0 / (4.0 * mu) * dp_dx * Radius * Radius * (r_squared / Radius / Radius - 1);
+          }
+          else
+          {
+            return 0.0;
+          }
+        }
+      }
+
+      default:
+        AssertThrow(false, ExcNotImplemented());
+      }
+    }
+
+    return 0;
+  }
+
+  
   template <int dim, int fe_degree>
   class LevelSetOperation
   {
   public:
     using Number = double;
 
-    LevelSetOperation(const LevelSetProblemParameters &param): param(param)
+    LevelSetOperation(const LevelSetProblemParameters &param,
+    ReinitilizationOperator<dim, fe_degree> &reinitilization_operator
+): param(param),reinitilization_operator(reinitilization_operator)
     {}
 
     void
@@ -795,8 +649,6 @@ namespace LevelSet
     double
     compute_time_step_advection() const;
 
-    void apply_advection_operator( LinearAlgebra::distributed::Vector<Number> &dst, LinearAlgebra::distributed::Vector<Number> const &src) const;
-
   private:
     MatrixFree<dim, Number>                         data;
     
@@ -825,6 +677,8 @@ namespace LevelSet
 
     SmoothnessIndicator<dim, fe_degree>             indicator;
 
+
+ReinitilizationOperator<dim, fe_degree> &reinitilization_operator;
     void
     local_apply_inverse_mass_matrix(
       const MatrixFree<dim, Number>                     &data,
@@ -1801,6 +1655,8 @@ namespace LevelSet
       vec_ki.add(1.0, num_Hamiltonian);
     }
 
+
+
     {
     TimerOutput::Scope t(computing_timer, "RI: apply inverse mass matrix");
     
@@ -1878,12 +1734,12 @@ namespace LevelSet
     // Define the coordinates of the center of the circular interface for
     // the current test case
     const Number x_center = 0.5;
-    const Number y_center = 0.5;
+    const Number y_center = 0.75;
     const Number z_center = 0.;
     // Exact radius of interface for the current test case
     const Number r_interface = 0.15;
     // Interval from the inteface, in which the norm should be calculated
-    const Number epsilon = 0.02;
+    const Number epsilon = RI_distance*0.5;
 
     Number  norm_interface_region = 0.;
 
@@ -1908,7 +1764,7 @@ namespace LevelSet
           auto r = compute_radius.value(phi.quadrature_point(q));
 
           // calculate deviation from solution
-          auto sol_difference = std::abs(0.5*exact_solution.value(phi.quadrature_point(q)) - phi.get_value(q));
+          auto sol_difference = std::abs(exact_solution.value(phi.quadrature_point(q)) - phi.get_value(q));
           // alternatively, use:
           // auto sol_difference = std::abs((r-r_interface) - phi.get_value(q));
           
@@ -2805,20 +2661,6 @@ namespace LevelSet
       return std::min(max_time_step_size_advection, param.courant_number_advection / (std::pow(fe_degree, 2) * max_transport));
   }
 
-template <int dim, int fe_degree>
-void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::distributed::Vector<Number> &dst,
-                                                                 LinearAlgebra::distributed::Vector<Number> const &src) const {
-                                                                  
-  data.loop(&LevelSetOperation<dim, fe_degree>::local_apply_domain,
-            &LevelSetOperation<dim, fe_degree>::local_apply_inner_face,
-            &LevelSetOperation<dim, fe_degree>::local_apply_boundary_face, this,
-            dst, src, true, MatrixFree<dim, Number>::DataAccessOnFaces::values,
-            MatrixFree<dim, Number>::DataAccessOnFaces::values);
-
-  data.cell_loop(
-      &LevelSetOperation<dim, fe_degree>::local_apply_inverse_mass_matrix, this,
-      dst, dst);
-}
 
 
   class LowStorageRungeKuttaIntegrator
@@ -2960,7 +2802,6 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
       // perform implicit time discretization for artificial viscosity term
       if (param.use_IMEX)
         pde_operator.apply_viscosity_implicit(solution, vec_ki, time_step, computing_timer);
-
       // calculate numerical Hamiltonian with Godunov method
       pde_operator.Godunov_Hamiltonian(solution, num_Hamiltonian, Signum_smoothed, computing_timer);
       
@@ -3001,7 +2842,6 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
   };
 
 
-
   template <int dim, int fe_degree>
   class AdvectionRIProblem
   {
@@ -3030,26 +2870,26 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
 
     template <typename VectorType, typename Operator>
     void
-    refine_grid(Operator            &pde_operator,
-                const unsigned int   number,
-                VectorType          &rk_reg_1,
-                VectorType          &rk_reg_2,
-                VectorType          &num_Hamiltonian,
-                VectorType          &Signum_smoothed,
-                VectorType          &God_grad,
-                VectorType          &velocity);
+    refine_grid(Operator &pde_operator,
+                const unsigned int number,
+                VectorType &rk_reg_1,
+                VectorType &rk_reg_2,
+                VectorType &num_Hamiltonian,
+                VectorType &Signum_smoothed,
+                VectorType &God_grad,
+                VectorType &velocity);
 
     LinearAlgebra::distributed::Vector<Number> solution;
     LinearAlgebra::distributed::Vector<Number> velocity;
 
     std::shared_ptr<Triangulation<dim>> triangulation;
-    MappingQGeneric<dim>                mapping;
-    FESystem<dim>                       fe;
-    FESystem<dim>                       fe_legendre;
-    FESystem<dim>                       fe_vel;
-    DoFHandler<dim>                     dof_handler;
-    DoFHandler<dim>                     dof_handler_legendre;
-    DoFHandler<dim>                     dof_handler_vel;
+    MappingQGeneric<dim> mapping;
+    FESystem<dim> fe;
+    FESystem<dim> fe_legendre;
+    FESystem<dim> fe_vel;
+    DoFHandler<dim> dof_handler;
+    DoFHandler<dim> dof_handler_legendre;
+    DoFHandler<dim> dof_handler_vel;
 
     IndexSet locally_relevant_dofs;
 
@@ -3062,32 +2902,22 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
     TimerOutput computing_timer;
   };
 
-
-
   template <int dim, int fe_degree>
   AdvectionRIProblem<dim, fe_degree>::AdvectionRIProblem(const LevelSetProblemParameters &param)
-    : mapping(fe_degree)
-    , fe(FE_DGQ<dim>(fe_degree), 1)
-    , fe_legendre(FE_DGQLegendre<dim>(fe_degree), 1)
-    , fe_vel(FE_DGQ<dim>(fe_degree), dim)
-    , time(0)
-    , pcout(std::cout, Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-    , param(param)
-    , computing_timer(MPI_COMM_WORLD,
-                      pcout,
-                      TimerOutput::never,
-                      TimerOutput::wall_times)
+      : mapping(fe_degree), fe(FE_DGQ<dim>(fe_degree), 1), fe_legendre(FE_DGQLegendre<dim>(fe_degree), 1), fe_vel(FE_DGQ<dim>(fe_degree), dim), time(0), pcout(std::cout, Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0), param(param), computing_timer(MPI_COMM_WORLD,
+                                                                                                                                                                                                                                                                pcout,
+                                                                                                                                                                                                                                                                TimerOutput::never,
+                                                                                                                                                                                                                                                                TimerOutput::wall_times)
   {
 #ifdef DEAL_II_WITH_P4EST
     if (dim > 1)
       triangulation =
-        std::make_shared<parallel::distributed::Triangulation<dim>>(
-          MPI_COMM_WORLD);
+          std::make_shared<parallel::distributed::Triangulation<dim>>(
+              MPI_COMM_WORLD);
     else
 #endif
       triangulation = std::make_shared<Triangulation<dim>>();
   }
-
 
   template <int dim, int fe_degree>
   void
@@ -3099,12 +2929,12 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
     Point<dim> p2;
     for (unsigned int d = 0; d < dim; ++d)
     {
-      p2[d] = 1;
-      //p1[d] = -2;
+      p2[d] = 1.0;
+      // p1[d] = -2;
     }
-    //p2[0] = 3;
+    // p2[0] = 3;
     std::vector<unsigned int> subdivisions(dim, 1);
-    //subdivisions[0] = 3;
+    // subdivisions[0] = 3;
 
     GridGenerator::subdivided_hyper_rectangle(*triangulation,
                                               subdivisions,
@@ -3113,8 +2943,6 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
 
     triangulation->refine_global(param.n_global_refinements);
   }
-
-
 
   template <int dim, int fe_degree>
   void
@@ -3135,64 +2963,56 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
 #endif
   }
 
-
-
   // Compute the gradient of the level-set field for output
   template <int dim>
   class GradientPostprocessor : public DataPostprocessorVector<dim>
   {
   public:
-    GradientPostprocessor ()
-      :
-      DataPostprocessorVector<dim> ("grad_u",
-                                    update_gradients)
-    {}
-  
-
-
-    virtual
-    void
-    evaluate_scalar_field
-    (const DataPostprocessorInputs::Scalar<dim> &param,
-     std::vector<Vector<double>>                &computed_quantities) const override
+    GradientPostprocessor()
+        : DataPostprocessorVector<dim>("grad_u",
+                                       update_gradients)
     {
-      AssertDimension (param.solution_gradients.size(),
+    }
+
+    virtual void
+    evaluate_scalar_field(const DataPostprocessorInputs::Scalar<dim> &param,
+                          std::vector<Vector<double>> &computed_quantities) const override
+    {
+      AssertDimension(param.solution_gradients.size(),
                       computed_quantities.size());
-  
-      for (unsigned int p=0; p<param.solution_gradients.size(); ++p)
-        {
-          AssertDimension (computed_quantities[p].size(), dim);
-          for (unsigned int d=0; d<dim; ++d)
-            computed_quantities[p][d] = param.solution_gradients[p][d];
-        }
+
+      for (unsigned int p = 0; p < param.solution_gradients.size(); ++p)
+      {
+        AssertDimension(computed_quantities[p].size(), dim);
+        for (unsigned int d = 0; d < dim; ++d)
+          computed_quantities[p][d] = param.solution_gradients[p][d];
+      }
     }
   };
 
-
-
   template <int dim, int fe_degree>
   void
-  AdvectionRIProblem<dim, fe_degree>::output_results(const unsigned int   output_number,
-                                                     const Tensor<1, 2>   mass_energy,
-                                                     const Number         RI_indicator,
-                                                     const Number         n_RI_timestep_ave,
-                                                     const Number         area,
-                                                     const Number         circularity,
-                                                     const Number         time_step_advection,
-                                                     const Number         time_step_RI,
-                                                     const Number         ave_CG_iterations,
-                                                     const Number         ave_cond_number)
+  AdvectionRIProblem<dim, fe_degree>::output_results(const unsigned int output_number,
+                                                     const Tensor<1, 2> mass_energy,
+                                                     const Number RI_indicator,
+                                                     const Number n_RI_timestep_ave,
+                                                     const Number area,
+                                                     const Number circularity,
+                                                     const Number time_step_advection,
+                                                     const Number time_step_RI,
+                                                     const Number ave_CG_iterations,
+                                                     const Number ave_cond_number)
   {
-    pcout << "  -------------------------------------------" << std::endl 
+    pcout << "  -------------------------------------------" << std::endl
           << "   Time: " << std::setw(25) << std::setprecision(3) << time << std::endl
-          << "  -------------------------------------------" << std::endl; 
+          << "  -------------------------------------------" << std::endl;
     if (param.dynamic_sim)
     {
       pcout << "   time step adv: " << std::setw(16) << std::setprecision(3) << time_step_advection << std::endl;
     }
     pcout << "   time step RI: " << std::setw(17) << std::setprecision(3) << time_step_RI << std::endl
           << "   mass: " << std::setprecision(8) << std::setw(25) << mass_energy[0] << std::endl
-          << "   energy: " << std::setprecision(8) << std::setw(23) << mass_energy[1] << std::endl 
+          << "   energy: " << std::setprecision(8) << std::setw(23) << mass_energy[1] << std::endl
           << "   area: " << std::setprecision(6) << std::setw(25) << area << std::endl
           << "   circularity: " << std::setprecision(6) << std::setw(18) << circularity << std::endl
           << "   RI quality: " << std::setw(19) << std::setprecision(6) << RI_indicator << std::endl
@@ -3200,11 +3020,11 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
           << "   NoDoF: " << std::setw(24) << dof_handler.n_dofs() << std::endl;
     if (param.dynamic_sim)
     {
-      pcout << "   ave RI/adv.: " << std::setw(18) << std::setprecision(5)<< n_RI_timestep_ave << std::endl;
+      pcout << "   ave RI/adv.: " << std::setw(18) << std::setprecision(5) << n_RI_timestep_ave << std::endl;
     }
-          if (param.use_IMEX)
-            pcout << "   ave CG iterations: " << std::setw(12) << std::setprecision(5)<< ave_CG_iterations << std::endl
-            << "   ave condition number: " << std::setw(9) << std::setprecision(5)<< ave_cond_number << std::endl;
+    if (param.use_IMEX)
+      pcout << "   ave CG iterations: " << std::setw(12) << std::setprecision(5) << ave_CG_iterations << std::endl
+            << "   ave condition number: " << std::setw(9) << std::setprecision(5) << ave_cond_number << std::endl;
     pcout << "  -------------------------------------------" << std::endl;
 
     if (!param.print_vtu)
@@ -3214,20 +3034,20 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
     GradientPostprocessor<dim> gradient_postprocessor;
 
     // Write output to a vtu file
-    DataOut<dim>          data_out;
+    DataOut<dim> data_out;
     if (param.dynamic_sim)
     {
-      DataOut<dim>          data_out_vel;
+      DataOut<dim> data_out_vel;
       data_out_vel.attach_dof_handler(dof_handler_vel);
       data_out_vel.add_data_vector(velocity, "velocity");
       data_out_vel.build_patches(mapping,
                                  fe_degree,
                                  DataOut<dim>::curved_inner_cells);
       const std::string filename_velocity =
-        "velocity_" + Utilities::int_to_string(output_number, 3) + ".vtu";
+          "velocity_" + Utilities::int_to_string(output_number, 3) + ".vtu";
       data_out_vel.write_vtu_in_parallel(filename_velocity, MPI_COMM_WORLD);
     }
-     
+
     DataOutBase::VtkFlags flags;
     flags.write_higher_order_cells = true;
     data_out.set_flags(flags);
@@ -3240,36 +3060,34 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
                            DataOut<dim>::curved_inner_cells);
 
     const std::string filename =
-      "solution_" + Utilities::int_to_string(output_number, 3) + ".vtu";
+        "solution_" + Utilities::int_to_string(output_number, 3) + ".vtu";
     data_out.write_vtu_in_parallel(filename, MPI_COMM_WORLD);
   }
-
-
 
   template <int dim, int fe_degree>
   template <typename VectorType, typename Operator>
   void
-  AdvectionRIProblem<dim, fe_degree>::refine_grid(Operator            &pde_operator,
+  AdvectionRIProblem<dim, fe_degree>::refine_grid(Operator &pde_operator,
                                                   const unsigned int,
-                                                  VectorType          &rk_reg1,
-                                                  VectorType          &rk_reg2,
-                                                  VectorType&         num_Hamiltonian,
-                                                  VectorType&         Signum_smoothed,
-                                                  VectorType&         God_grad,
-                                                  VectorType&         velocity)
+                                                  VectorType &rk_reg1,
+                                                  VectorType &rk_reg2,
+                                                  VectorType &num_Hamiltonian,
+                                                  VectorType &Signum_smoothed,
+                                                  VectorType &God_grad,
+                                                  VectorType &velocity)
   {
     pde_operator.set_artificial_viscosity_refinement_flags(solution);
 
     // delete flags, if max/min level is reached
-    if (triangulation->n_levels() > (param.n_global_refinements+param.n_refinement_levels))
+    if (triangulation->n_levels() > (param.n_global_refinements + param.n_refinement_levels))
       for (typename Triangulation<dim>::active_cell_iterator cell =
-             triangulation->begin_active(param.n_global_refinements+param.n_refinement_levels);
+               triangulation->begin_active(param.n_global_refinements + param.n_refinement_levels);
            cell != triangulation->end();
            ++cell)
         if (cell->is_locally_owned())
           cell->clear_refine_flag();
     for (typename Triangulation<dim>::active_cell_iterator cell =
-           triangulation->begin_active(param.n_global_refinements);
+             triangulation->begin_active(param.n_global_refinements);
          cell != triangulation->end_active(param.n_global_refinements);
          ++cell)
       if (cell->is_locally_owned())
@@ -3278,64 +3096,64 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
     triangulation->prepare_coarsening_and_refinement();
 
     parallel::distributed::Triangulation<dim> *tria =
-      dynamic_cast<parallel::distributed::Triangulation<dim> *>(
-        triangulation.get());
+        dynamic_cast<parallel::distributed::Triangulation<dim> *>(
+            triangulation.get());
 
     if (tria)
-      {
-        parallel::distributed::SolutionTransfer<dim, VectorType>
+    {
+      parallel::distributed::SolutionTransfer<dim, VectorType>
           solution_transfer(dof_handler);
 
-        solution_transfer.prepare_for_coarsening_and_refinement(solution);
+      solution_transfer.prepare_for_coarsening_and_refinement(solution);
 
-        triangulation->execute_coarsening_and_refinement();
+      triangulation->execute_coarsening_and_refinement();
 
-        // reinit data
-        dof_handler.distribute_dofs(fe);
-        dof_handler_legendre.distribute_dofs(fe_legendre);
-        dof_handler_vel.distribute_dofs(fe_vel);
+      // reinit data
+      dof_handler.distribute_dofs(fe);
+      dof_handler_legendre.distribute_dofs(fe_legendre);
+      dof_handler_vel.distribute_dofs(fe_vel);
 
-        pde_operator.reinit(dof_handler,
-                              dof_handler_legendre,
-                              dof_handler_vel);
+      pde_operator.reinit(dof_handler,
+                          dof_handler_legendre,
+                          dof_handler_vel);
 
-        // and interpolate the solution
-        VectorType interpolated_solution;
-        // create VectorType in the right size (=new mesh) here
-        pde_operator.initialize_dof_vector(interpolated_solution, 0);
+      // and interpolate the solution
+      VectorType interpolated_solution;
+      // create VectorType in the right size (=new mesh) here
+      pde_operator.initialize_dof_vector(interpolated_solution, 0);
 
-        solution_transfer.interpolate(interpolated_solution);
+      solution_transfer.interpolate(interpolated_solution);
 
-        pde_operator.initialize_dof_vector(solution, 0);
-        solution = interpolated_solution;
-      }
+      pde_operator.initialize_dof_vector(solution, 0);
+      solution = interpolated_solution;
+    }
     else
-      {
-        SolutionTransfer<dim, VectorType> solution_transfer(dof_handler);
+    {
+      SolutionTransfer<dim, VectorType> solution_transfer(dof_handler);
 
-        solution_transfer.prepare_for_coarsening_and_refinement(solution);
+      solution_transfer.prepare_for_coarsening_and_refinement(solution);
 
-        triangulation->execute_coarsening_and_refinement();
+      triangulation->execute_coarsening_and_refinement();
 
-        // reinit data
-        dof_handler.distribute_dofs(fe);
-        dof_handler_legendre.distribute_dofs(fe_legendre);
-        dof_handler_vel.distribute_dofs(fe_vel);
+      // reinit data
+      dof_handler.distribute_dofs(fe);
+      dof_handler_legendre.distribute_dofs(fe_legendre);
+      dof_handler_vel.distribute_dofs(fe_vel);
 
-        pde_operator.reinit(dof_handler,
-                            dof_handler_legendre,
-                            dof_handler_vel);
+      pde_operator.reinit(dof_handler,
+                          dof_handler_legendre,
+                          dof_handler_vel);
 
-        // and interpolate the solution
-        VectorType interpolated_solution;
-        // create VectorType in the right size (=new mesh) here
-        pde_operator.initialize_dof_vector(interpolated_solution, 0);
+      // and interpolate the solution
+      VectorType interpolated_solution;
+      // create VectorType in the right size (=new mesh) here
+      pde_operator.initialize_dof_vector(interpolated_solution, 0);
 
-        solution_transfer.interpolate(solution, interpolated_solution);
+      solution_transfer.interpolate(solution, interpolated_solution);
 
-        pde_operator.initialize_dof_vector(solution, 0);
-        solution = interpolated_solution;
-      }
+      pde_operator.initialize_dof_vector(solution, 0);
+      solution = interpolated_solution;
+    }
 
     // reinit vectors
     rk_reg1.reinit(solution);
@@ -3346,69 +3164,90 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
     pde_operator.initialize_dof_vector(velocity, 2);
   }
 
-
-
   template <int dim, int fe_degree>
   void
   AdvectionRIProblem<dim, fe_degree>::run()
   {
+    using AdvectionIntegratorConcretization = typename TimeIntegratorConcretization::Concretize<AdvectionOperator<dim, fe_degree>, dim, fe_degree, advection_integrator>::type;
+    using ReinitilizationIntegratorConcretization = typename TimeIntegratorConcretization::Concretize<ReinitilizationOperator<dim, fe_degree>, dim, fe_degree, reinitilization_integrator>::type;
+
     make_grid();
 
-    // Initialize the advection operator
-    LevelSetOperation<dim, fe_degree> level_set_operator(param);
-
     setup_dofs();
+
+    OperatorData<dim, fe_degree> operator_data(dof_handler, dof_handler_legendre, dof_handler_vel);
+    operator_data.reinit();
+
+    AdvectionOperator<dim, fe_degree> advection_operator(operator_data, param);
+    advection_operator.reinit();
+
+    RIDiffusionOperator<dim, fe_degree> RI_diffusion_operator(operator_data, param);
+    RIGradOperator<dim, fe_degree> RI_grad_operator(operator_data);
+
+    ReinitilizationOperator<dim, fe_degree> reinitilization_operator(operator_data,
+                            param,
+                            RI_diffusion_operator,
+                            RI_grad_operator);
+
+    // Initialize the advection operator
+ LevelSetOperation<dim,fe_degree> level_set_operator(param,reinitilization_operator);
 
     level_set_operator.reinit(dof_handler, dof_handler_legendre, dof_handler_vel);
     level_set_operator.initialize_dof_vector(solution, 0);
     level_set_operator.initialize_dof_vector(velocity, 2);
     level_set_operator.project_initial(solution);
 
+//level_set_operator.init();
+reinitilization_operator.reinit_vectors();
+
     // Initialize auxiliary vectors
     LinearAlgebra::distributed::Vector<Number> num_Hamiltonian(solution);
     LinearAlgebra::distributed::Vector<Number> Signum_smoothed(solution);
     LinearAlgebra::distributed::Vector<Number> God_grad(solution);
 
+
+    LinearAlgebra::distributed::Vector<Number> Zwischen(solution);
+
     // Initialize timer
-    Timer        timer;
+    Timer timer;
 
     // Initialize auxiliary variables
-    Number       RI_indicator = 0.;
-    Number       circularity = 0.;
-    Number       area = 1.;
-    Number       ave_CG_iterations = 0.;
-    Number       ave_cond_number = 0.;
+    Number RI_indicator = 0.;
+    Number circularity = 0.;
+    Number area = 1.;
+    Number ave_CG_iterations = 0.;
+    Number ave_cond_number = 0.;
     unsigned int timestep_RI_counter = 0;
     unsigned int RI_counter = 0;
-    Number       n_RI_timestep_ave = 0.;
-    Number       glob_min_vertex_distance = 0.;
-    Number       glob_max_vertex_distance = 0.;
-    Number       min_vertex_distance = 0.;
-    Number       wtime = 0.;
-    Number       output_time = 0.;
+    Number n_RI_timestep_ave = 0.;
+    Number glob_min_vertex_distance = 0.;
+    Number glob_max_vertex_distance = 0.;
+    Number min_vertex_distance = 0.;
+    Number wtime = 0.;
+    Number output_time = 0.;
     unsigned int timestep_number = 0;
     unsigned int timestep_number_RI = 0;
     unsigned int n_output = 0;
 
     // Prepare for output of initial conditions
     level_set_operator.compute_local_viscosity(solution);
-    area = level_set_operator.compute_area(solution, 0, 0);
-    circularity = level_set_operator.compute_circularity(solution, dof_handler);
+    // area = level_set_operator.compute_area(solution, 0, 0);
+    // circularity = level_set_operator.compute_circularity(solution, dof_handler);
 
     if (param.dynamic_sim)
     {
       TransportSpeed<dim> transport_speed(time, param);
       VectorTools::interpolate(dof_handler_vel,
-                              transport_speed,
-                              velocity);
+                               transport_speed,
+                               velocity);
       level_set_operator.set_velocity_vector(velocity);
     }
 
-    pcout << "          __         __               __    __  ___     "  << std::endl;
-    pcout << "   |     |__  \\  /  |__    |     _   |__   |__   |     "  << std::endl;
-    pcout << "   |__   |__   \\/   |__    |__        __|  |__   |     "  << std::endl;
+    pcout << "          __         __               __    __  ___     " << std::endl;
+    pcout << "   |     |__  \\  /  |__    |     _   |__   |__   |     " << std::endl;
+    pcout << "   |__   |__   \\/   |__    |__        __|  |__   |     " << std::endl;
     pcout << std::endl;
-    pcout << "                    is running ...                      "  << std::endl;
+    pcout << "                    is running ...                      " << std::endl;
     pcout << std::endl;
     pcout << std::endl;
 
@@ -3427,50 +3266,62 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
     // Initialize time integrator and Runke-Kutta registers
     LinearAlgebra::distributed::Vector<Number> rk_register_1(solution), rk_register_2(solution);
     const LowStorageRungeKuttaIntegrator time_integrator(lsrk_scheme, param);
+    const AdvectionIntegratorConcretization advection_integrator(advection_operator,param, solution);
+
+    const ReinitilizationIntegratorConcretization reinitilization_integrator(reinitilization_operator,param, solution);
 
     // update minimum cell size for reinitialization time step calculation and refinement interval calculation
     min_vertex_distance = 0.;
     glob_min_vertex_distance = 0.;
     min_vertex_distance = std::numeric_limits<Number>::max();
-      for (const auto &cell : triangulation->active_cell_iterators())
-    min_vertex_distance = std::min(min_vertex_distance, cell->minimum_vertex_distance());
+    for (const auto &cell : triangulation->active_cell_iterators())
+      min_vertex_distance = std::min(min_vertex_distance, cell->minimum_vertex_distance());
     glob_min_vertex_distance = Utilities::MPI::min(min_vertex_distance, MPI_COMM_WORLD);
 
     // assume not refined initial mesh (glob_max_vertex_distance = glob_min_vertex_distance)
     glob_max_vertex_distance = glob_min_vertex_distance;
 
-    // Compute RI distance, 
+    // Compute RI distance,
     level_set_operator.compute_RI_distance(glob_max_vertex_distance);
+    reinitilization_operator.compute_RI_distance(glob_max_vertex_distance);
+
+        advection_operator.compute_RI_distance(glob_max_vertex_distance);
+
 
     // Do first level-set flattening process
     level_set_operator.flatten_level_set(solution);
 
     // Preparations
+
+
     level_set_operator.reinit_grad_vectors(solution);
     level_set_operator.compute_penalty_parameter();
     level_set_operator.compute_viscosity_value(glob_max_vertex_distance);
+
+    reinitilization_operator.compute_penalty_parameter();
+    reinitilization_operator.compute_viscosity_value(glob_max_vertex_distance);
+
+
+    //RI_diffusion_operator.compute_penalty_parameter();
+    //RI_diffusion_operator.compute_viscosity_value(glob_max_vertex_distance);
 
     // calculate reinitialization time step size (char. velocity ~ 1.0) for first RI time step
     if (param.use_IMEX)
       time_step_RI = param.courant_number_RI * glob_min_vertex_distance / (fe_degree * fe_degree);
     else
-      time_step_RI = param.courant_number_RI / param.IP_diffusion / (std::pow(fe_degree, 2) / glob_min_vertex_distance + 
-                     level_set_operator.get_viscosity_value()  *
-                     std::pow(fe_degree, 4) / (glob_min_vertex_distance * glob_min_vertex_distance));
-
-    const OneStepTheta implicit_time_stepping(level_set_operator, solution);
+      time_step_RI = param.courant_number_RI / param.IP_diffusion / (std::pow(fe_degree, 2) / glob_min_vertex_distance + level_set_operator.get_viscosity_value() * std::pow(fe_degree, 4) / (glob_min_vertex_distance * glob_min_vertex_distance));
 
     ////////////////////////////////////////////////////////////////////////
     ///////////////////////////// Time loop ////////////////////////////////
     ////////////////////////////////////////////////////////////////////////
     while (time < param.FINAL_TIME - 1e-12)
-      {
-        timer.restart();
+    {
+      timer.restart();
 
-        // update transport speed interpolation from analytical function
-        if (param.dynamic_sim)
+      // update transport speed interpolation from analytical function
+      if (param.dynamic_sim)
+      {
         {
-          {
           TimerOutput::Scope t(computing_timer, "Interpolate velocity field from analytical function");
 
           TransportSpeed<dim> transport_speed(time, param);
@@ -3479,217 +3330,248 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
                                    velocity);
 
           level_set_operator.set_velocity_vector(velocity);
-          }
+        }
 
-          // update advection time step size
-          {
+        // update advection time step size
+        {
           TimerOutput::Scope t(computing_timer, "ADVECTION: Compute advection time step size");
 
           time_step_advection = level_set_operator.compute_time_step_advection();
-
+          //time_step_advection = param.time_step_size;
           // ensure that FINAL_TIME is reached exactly with last time step
           if (time + time_step_advection > param.FINAL_TIME)
             time_step_advection = param.FINAL_TIME - time;
-          }
-
-          //time_integrator.perform_time_step(level_set_operator,
-          //                                  time,
-          //                                  time_step_advection,
-          //                                  solution,
-          //                                  rk_register_1,
-          //                                  rk_register_2,
-          //                                  computing_timer);
-
-          implicit_time_stepping.UpdateBuffers(solution);
-          implicit_time_stepping.perform_time_step(time_step_advection, solution);
         }
+        advection_integrator.perform_time_step(time,
+                                               time_step_advection,
+                                               solution,
+                                               rk_register_1,
+                                               rk_register_2,
+                                               computing_timer);
 
-        if(param.use_gradient_based_RI_indicator)
+         //time_integrator.perform_time_step(level_set_operator,
+         //                                  time,
+         //                                  time_step_advection,
+         //                                  solution,
+         //                                  rk_register_1,
+         //                                  rk_register_2,
+         //                                  computing_timer);
+      }
+
+      if (param.use_gradient_based_RI_indicator)
+      {
+        // Assert, static simulation makes no sense with gradient based RI-indicator
+        AssertThrow(param.dynamic_sim == true, ExcMessage("RI-indicator is not meaningful for pure reinitialization."));
+
         {
-          // Assert, static simulation makes no sense with gradient based RI-indicator
-          AssertThrow(param.dynamic_sim == true, ExcMessage("RI-indicator is not meaningful for pure reinitialization."));
-
-          {
           TimerOutput::Scope t(computing_timer, "RI: compute gradient-based RI indicator");
 
           level_set_operator.compute_RI_indicator(solution);
           RI_indicator = level_set_operator.get_RI_indicator();
-          }
-
-          if (RI_indicator > param.RI_quality_criteria)
-          {
-            level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
-            level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
-
-                for (unsigned int i = 0; i < param.RI_steps; i++)
-                {
-                  time_integrator.perform_time_step_RI(level_set_operator,
-                                                    time,
-                                                    time_step_RI,
-                                                    solution,
-                                                    rk_register_1,
-                                                    rk_register_2,
-                                                    num_Hamiltonian,
-                                                    Signum_smoothed,
-                                                    computing_timer);
-
-                  {
-                  TimerOutput::Scope t(computing_timer, "Flatten level set field");
-
-                  level_set_operator.flatten_level_set(solution);
-                  }
-                }
-
-                RI_counter += param.RI_steps;
-                timestep_number_RI += param.RI_steps;
-          }
         }
-        else
+
+        if (RI_indicator > param.RI_quality_criteria)
         {
-          if (timestep_number%param.RI_interval==0)
+        
+        reinitilization_operator.prepare_reinitilization(time,time_step_RI,solution,glob_max_vertex_distance,computing_timer);
+
+
+          level_set_operator.Godunov_gradient(solution,
+                                               God_grad,
+                                              computing_timer);
+          level_set_operator.Smoothed_signum(solution,
+                                              Signum_smoothed,
+                                              God_grad,
+                                             computing_timer, glob_max_vertex_distance);
+                                                                      
+
+          for (unsigned int i = 0; i < param.RI_steps; i++)
           {
-            if (param.dynamic_sim == false)
+
+
+            //reinitilization_integrator.perform_time_step(time,
+            //                                   time_step_RI,
+            //                                   solution,
+            //                                   rk_register_1,
+            //                                   rk_register_2,
+            //                                  computing_timer);
+
+            //      time_integrator.perform_time_step_RI(level_set_operator,
+            //                                     time,
+            //                                     time_step_RI,
+            //                                     solution,
+            //                                     rk_register_1,
+            //                                     rk_register_2,
+            //                                     num_Hamiltonian,
+            //                                     Signum_smoothed,
+            //                                     computing_timer);
+
+
             {
-              // in case of a static simulation, compute smoothed signum only once at the beginning
-              if (timestep_number == 0)
-              {
-                level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
-                level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
-              }
+              TimerOutput::Scope t(computing_timer, "Flatten level set field");
+
+              level_set_operator.flatten_level_set(solution);
             }
-            else
+          }
+
+          RI_counter += param.RI_steps;
+          timestep_number_RI += param.RI_steps;
+        }
+      }
+      else
+      {
+        if (timestep_number % param.RI_interval == 0)
+        {
+          if (param.dynamic_sim == false)
+          {
+            // in case of a static simulation, compute smoothed signum only once at the beginning
+            if (timestep_number == 0)
             {
-              level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
-              level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
+              level_set_operator.Godunov_gradient(solution,
+                                                   God_grad,
+                                                  computing_timer);
+              level_set_operator.Smoothed_signum(solution,  Signum_smoothed,
+                                                            God_grad,
+                                                 computing_timer, glob_max_vertex_distance);
             }
-
-
-                for (unsigned int i = 0; i < param.RI_steps; i++)
-                {
-                  time_integrator.perform_time_step_RI(level_set_operator,
-                                                    time,
-                                                    time_step_RI,
-                                                    solution,
-                                                    rk_register_1,
-                                                    rk_register_2,
-                                                    num_Hamiltonian,
-                                                    Signum_smoothed,
-                                                    computing_timer);
-                  
-                  {
-                  TimerOutput::Scope t(computing_timer, "Flatten level set field");
-
-                  level_set_operator.flatten_level_set(solution);
-                  }
-                }
-
-                RI_counter += param.RI_steps;
-                timestep_number_RI += param.RI_steps;
           }
-        }
-
-        if (param.dynamic_sim)
-        {
-          time += time_step_advection;
-        }
-        else
-        {
-          time += time_step_RI;
-        }
-        timestep_number++;
-        timestep_RI_counter++;
-
-
-        if (param.use_adaptive_mesh_refinement)
+          else
           {
-            if ((timestep_number % param.factor_refinement_interval) == 0)
-              {
-                {
-                TimerOutput::Scope t(computing_timer, "Compute local viscosity field for mesh refinement");
-                
-                // compute local viscosity value for mesh refinement criteria
-                level_set_operator.compute_local_viscosity(solution); 
-                }
-                
-                {
-                TimerOutput::Scope t(computing_timer, "Do adaptive mesh refinement");
-
-                refine_grid(level_set_operator, timestep_number, rk_register_1, rk_register_2, num_Hamiltonian, Signum_smoothed, God_grad, velocity);
-                level_set_operator.reinit_grad_vectors(solution);
-                level_set_operator.compute_penalty_parameter();
-
-                // update minimum cell size for reinitialization time step calculation and refinement interval calculation
-                min_vertex_distance = 0.;
-                glob_min_vertex_distance = 0.;
-                min_vertex_distance = std::numeric_limits<Number>::max();
-                  for (const auto &cell : triangulation->active_cell_iterators())
-                min_vertex_distance = std::min(min_vertex_distance, cell->minimum_vertex_distance());
-                glob_min_vertex_distance = Utilities::MPI::min(min_vertex_distance, MPI_COMM_WORLD);
-                }
-
-                // in the case of a static simulation with adaptive grid refinement, update signum function after mesh refinement
-                level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
-                level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
-
-                {
-                TimerOutput::Scope t(computing_timer, "RI: compute reinitialization time step size");
-                
-                // update reinitialization time step size (char. velocity ~ 1.0)
-                if (param.use_IMEX)
-                  time_step_RI = param.courant_number_RI * glob_min_vertex_distance / (fe_degree * fe_degree);
-                else
-                  time_step_RI = param.courant_number_RI / param.IP_diffusion / (std::pow(fe_degree, 2) / glob_min_vertex_distance + 
-                                 level_set_operator.get_viscosity_value() *
-                                 std::pow(fe_degree, 4) / (glob_min_vertex_distance * glob_min_vertex_distance));
-                }
-              }
+            level_set_operator.Godunov_gradient(solution,
+                                                 God_grad,
+                                                computing_timer);
+            level_set_operator.Smoothed_signum(solution,
+                                                Signum_smoothed,
+                                                God_grad,
+                                               computing_timer, glob_max_vertex_distance);
           }
 
-        wtime += timer.wall_time();
-
-        timer.restart();
-
-        if (param.dynamic_sim)
-          time_step_output = time_step_advection;
-        else
-          time_step_output = time_step_RI;
-
-        if (static_cast<int>(time / (param.output_tick)) !=
-              static_cast<int>((time - time_step_output) / param.output_tick) ||
-            time >= param.FINAL_TIME - 1e-12)
+          for (unsigned int i = 0; i < param.RI_steps; i++)
           {
-            TimerOutput::Scope t(computing_timer, "Output results");
+            time_integrator.perform_time_step_RI(level_set_operator,
+                                                 time,
+                                                 time_step_RI,
+                                                 solution,
+                                                 rk_register_1,
+                                                 rk_register_2,
+                                                      num_Hamiltonian,
+                                                      Signum_smoothed,
+                                                 computing_timer);
 
-            level_set_operator.compute_local_viscosity(solution);
-            level_set_operator.compute_RI_indicator(solution);
-            RI_indicator = level_set_operator.get_RI_indicator();
-            area = level_set_operator.compute_area(solution, 0, 0);
-            circularity = level_set_operator.compute_circularity(solution, dof_handler);
-            n_RI_timestep_ave = (Number)RI_counter / (Number)timestep_RI_counter;
-            RI_indicator = level_set_operator.get_RI_indicator();
-            ave_CG_iterations = (Number) level_set_operator.get_CG_iterations()/RI_counter;
-            ave_cond_number = level_set_operator.get_cond_number()/RI_counter;
+            {
+              TimerOutput::Scope t(computing_timer, "Flatten level set field");
 
-            output_results(n_output++, 
-                           level_set_operator.compute_mass_and_energy(solution), 
-                           RI_indicator, 
-                           n_RI_timestep_ave, 
-                           area, 
-                           circularity, 
-                           time_step_advection, 
-                           time_step_RI,
-                           ave_CG_iterations,
-                           ave_cond_number);
-
-            level_set_operator.reset_CG_iterations();
-            level_set_operator.reset_cond_number();
-            timestep_RI_counter = 0;
-            RI_counter = 0;
+              level_set_operator.flatten_level_set(solution);
             }
-                
-        output_time += timer.wall_time();
+          }
+
+          RI_counter += param.RI_steps;
+          timestep_number_RI += param.RI_steps;
+        }
       }
 
+      if (param.dynamic_sim)
+      {
+        time += time_step_advection;
+      }
+      else
+      {
+        time += time_step_RI;
+      }
+      timestep_number++;
+      timestep_RI_counter++;
+
+      if (param.use_adaptive_mesh_refinement)
+      {
+        if ((timestep_number % param.factor_refinement_interval) == 0)
+        {
+          {
+            TimerOutput::Scope t(computing_timer, "Compute local viscosity field for mesh refinement");
+
+            // compute local viscosity value for mesh refinement criteria
+            level_set_operator.compute_local_viscosity(solution);
+          }
+
+          {
+            TimerOutput::Scope t(computing_timer, "Do adaptive mesh refinement");
+
+            refine_grid(level_set_operator, timestep_number, rk_register_1, rk_register_2, num_Hamiltonian, Signum_smoothed, God_grad, velocity);
+            level_set_operator.reinit_grad_vectors(solution);
+            level_set_operator.compute_penalty_parameter();
+
+            // update minimum cell size for reinitialization time step calculation and refinement interval calculation
+            min_vertex_distance = 0.;
+            glob_min_vertex_distance = 0.;
+            min_vertex_distance = std::numeric_limits<Number>::max();
+            for (const auto &cell : triangulation->active_cell_iterators())
+              min_vertex_distance = std::min(min_vertex_distance, cell->minimum_vertex_distance());
+            glob_min_vertex_distance = Utilities::MPI::min(min_vertex_distance, MPI_COMM_WORLD);
+          }
+
+          // in the case of a static simulation with adaptive grid refinement, update signum function after mesh refinement
+          level_set_operator.Godunov_gradient(solution,
+                                               God_grad,
+                                              computing_timer);
+          level_set_operator.Smoothed_signum(solution,  Signum_smoothed,
+                                                        God_grad,
+                                             computing_timer, glob_max_vertex_distance);
+
+          {
+            TimerOutput::Scope t(computing_timer, "RI: compute reinitialization time step size");
+
+            // update reinitialization time step size (char. velocity ~ 1.0)
+            if (param.use_IMEX)
+              time_step_RI = param.courant_number_RI * glob_min_vertex_distance / (fe_degree * fe_degree);
+            else
+              time_step_RI = param.courant_number_RI / param.IP_diffusion / (std::pow(fe_degree, 2) / glob_min_vertex_distance + level_set_operator.get_viscosity_value() * std::pow(fe_degree, 4) / (glob_min_vertex_distance * glob_min_vertex_distance));
+          }
+        }
+      }
+
+      wtime += timer.wall_time();
+
+      timer.restart();
+
+      if (param.dynamic_sim)
+        time_step_output = time_step_advection;
+      else
+        time_step_output = time_step_RI;
+
+      if (static_cast<int>(time / (param.output_tick)) !=
+              static_cast<int>((time - time_step_output) / param.output_tick) ||
+          time >= param.FINAL_TIME - 1e-12)
+      {
+        TimerOutput::Scope t(computing_timer, "Output results");
+
+        level_set_operator.compute_local_viscosity(solution);
+        level_set_operator.compute_RI_indicator(solution);
+        RI_indicator = level_set_operator.get_RI_indicator();
+        // area = level_set_operator.compute_area(solution, 0, 0);
+        // circularity = level_set_operator.compute_circularity(solution, dof_handler);
+        n_RI_timestep_ave = (Number)RI_counter / (Number)timestep_RI_counter;
+        RI_indicator = level_set_operator.get_RI_indicator();
+        ave_CG_iterations = (Number)level_set_operator.get_CG_iterations() / RI_counter;
+        ave_cond_number = level_set_operator.get_cond_number() / RI_counter;
+
+        output_results(n_output++,
+                       level_set_operator.compute_mass_and_energy(solution),
+                       RI_indicator,
+                       n_RI_timestep_ave,
+                       area,
+                       circularity,
+                       time_step_advection,
+                       time_step_RI,
+                       ave_CG_iterations,
+                       ave_cond_number);
+
+        level_set_operator.reset_CG_iterations();
+        level_set_operator.reset_cond_number();
+        timestep_RI_counter = 0;
+        RI_counter = 0;
+      }
+
+      output_time += timer.wall_time();
+    }
 
     pcout << std::endl
           << "   Level-set calculation has finished successfully." << std::endl;
@@ -3697,26 +3579,26 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
     pcout << std::endl;
     if (param.dynamic_sim)
     {
-    pcout << "   Performed " << timestep_number << " advection time steps." << std::endl;
+      pcout << "   Performed " << timestep_number << " advection time steps." << std::endl;
     }
     pcout << "   Performed " << timestep_number_RI << " reinitialization time steps." << std::endl;
 
     if (param.use_gradient_based_RI_indicator && param.dynamic_sim)
     {
-      const Number ave_RI_steps_per_ADV_step = (Number) timestep_number_RI / timestep_number;
-      pcout << "   Average RI time steps per advection time step: " << std::setprecision(5) 
-      << ave_RI_steps_per_ADV_step << std::endl;
+      const Number ave_RI_steps_per_ADV_step = (Number)timestep_number_RI / timestep_number;
+      pcout << "   Average RI time steps per advection time step: " << std::setprecision(5)
+            << ave_RI_steps_per_ADV_step << std::endl;
     }
 
     if (param.dynamic_sim)
     {
-    pcout << "   Average wall clock time per advection time step: "
-          << wtime / timestep_number << std::endl;
+      pcout << "   Average wall clock time per advection time step: "
+            << wtime / timestep_number << std::endl;
     }
     else
     {
-    pcout << "   Average wall clock time per reinitialization time step: "
-          << wtime / timestep_number_RI << std::endl;
+      pcout << "   Average wall clock time per reinitialization time step: "
+            << wtime / timestep_number_RI << std::endl;
     }
 
     pcout << "   Spent " << output_time << "s on output and " << wtime
@@ -3724,26 +3606,23 @@ void LevelSetOperation<dim, fe_degree>::apply_advection_operator(LinearAlgebra::
 
     // comment scope, if norm calculation is not required
     {
-    // compute error norm in the interval around a circular interface
-    const Number norm_interface = level_set_operator.compute_L2_norm_in_interface_region(solution);
-    pcout << std::endl
-          << "   L2-Norm in zero level interface: "
-          << norm_interface << std::endl;
+      // compute error norm in the interval around a circular interface
+      const Number norm_interface = level_set_operator.compute_L2_norm_in_interface_region(solution);
+      pcout << std::endl
+            << "   L2-Norm in zero level interface: "
+            << norm_interface << std::endl;
     }
 
     pcout << std::endl;
 
     computing_timer.print_summary();
     computing_timer.reset();
- 
+
     pcout << std::endl;
   }
 } // namespace LevelSet
 
-
-
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   using namespace LevelSet;
   using namespace dealii;
@@ -3751,133 +3630,133 @@ main(int argc, char *argv[])
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
 
   try
+  {
+    ParameterHandler prm;
+
+    LevelSetProblemParameters par;
+
+    if (argc > 1)
     {
-      ParameterHandler prm;
+      par.declare_parameters(prm);
+      prm.parse_input(argv[1]);
+      par.get_parameters(prm);
+    }
 
-      LevelSetProblemParameters par;
+    deallog.depth_console(0);
 
-      if (argc > 1)
-        {
-          par.declare_parameters(prm);
-          prm.parse_input(argv[1]);
-          par.get_parameters (prm);
-        }
-
-      deallog.depth_console(0);
-
-      if (par.dimension == 2)
-        {
-          if (par.fe_degree == 1 )
-          {
-          AdvectionRIProblem<2,1> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 2)
-          {
-          AdvectionRIProblem<2,2> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 3)
-          {
-          AdvectionRIProblem<2,3> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 4)
-          {
-          AdvectionRIProblem<2,4> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 5)
-          {
-          AdvectionRIProblem<2,5> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 6)
-          {
-          AdvectionRIProblem<2,6> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 7)
-          {
-          AdvectionRIProblem<2,7> advect_problem(par);
-          advect_problem.run();
-          }
-          else
-          {
-            AssertThrow(false, ExcNotImplemented());
-          }
-        }
-      else if (par.dimension == 3)
-        {
-          if (par.fe_degree ==1 )
-          {
-          AdvectionRIProblem<3,1> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 2)
-          {
-          AdvectionRIProblem<3,2> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 3)
-          {
-          AdvectionRIProblem<3,3> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 4)
-          {
-          AdvectionRIProblem<3,4> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 5)
-          {
-          AdvectionRIProblem<3,5> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 6)
-          {
-          AdvectionRIProblem<3,6> advect_problem(par);
-          advect_problem.run();
-          }
-          else if (par.fe_degree == 7)
-          {
-          AdvectionRIProblem<3,7> advect_problem(par);
-          advect_problem.run();
-          }
-          else
-          {
-            AssertThrow(false, ExcNotImplemented());
-          }
-        }
+    if (par.dimension == 2)
+    {
+      if (par.fe_degree == 1)
+      {
+        AdvectionRIProblem<2, 1> advect_problem(par);
+        advect_problem.run();
+      }
+      // else if (par.fe_degree == 2)
+      // {
+      // AdvectionRIProblem<2,2> advect_problem(par);
+      // advect_problem.run();
+      // }
+      // else if (par.fe_degree == 3)
+      // {
+      // AdvectionRIProblem<2,3> advect_problem(par);
+      // advect_problem.run();
+      // }
+      else if (par.fe_degree == 4)
+      {
+        AdvectionRIProblem<2, 4> advect_problem(par);
+        advect_problem.run();
+      }
+      // else if (par.fe_degree == 5)
+      // {
+      // AdvectionRIProblem<2,5> advect_problem(par);
+      // advect_problem.run();
+      // }
+      // else if (par.fe_degree == 6)
+      // {
+      // AdvectionRIProblem<2,6> advect_problem(par);
+      // advect_problem.run();
+      // }
+      // else if (par.fe_degree == 7)
+      // {
+      // AdvectionRIProblem<2,7> advect_problem(par);
+      // advect_problem.run();
+      // }
       else
+      {
         AssertThrow(false, ExcNotImplemented());
+      }
     }
+    else if (par.dimension == 3)
+    {
+      // if (par.fe_degree ==1 )
+      //{
+      // AdvectionRIProblem<3,1> advect_problem(par);
+      // advect_problem.run();
+      // }
+      // else if (par.fe_degree == 2)
+      //{
+      // AdvectionRIProblem<3,2> advect_problem(par);
+      // advect_problem.run();
+      // }
+      // else if (par.fe_degree == 3)
+      // {
+      // AdvectionRIProblem<3,3> advect_problem(par);
+      // advect_problem.run();
+      // }
+      // else if (par.fe_degree == 4)
+      // {
+      // AdvectionRIProblem<3,4> advect_problem(par);
+      // advect_problem.run();
+      // }
+      //  else if (par.fe_degree == 5)
+      //  {
+      //  AdvectionRIProblem<3,5> advect_problem(par);
+      //  advect_problem.run();
+      //  }
+      //  else if (par.fe_degree == 6)
+      //  {
+      //  AdvectionRIProblem<3,6> advect_problem(par);
+      //  advect_problem.run();
+      //  }
+      //  else if (par.fe_degree == 7)
+      //  {
+      //  AdvectionRIProblem<3,7> advect_problem(par);
+      //  advect_problem.run();
+      //  }
+      //  else
+      //  {
+      //    AssertThrow(false, ExcNotImplemented());
+      //  }
+    }
+    else
+      AssertThrow(false, ExcNotImplemented());
+  }
   catch (std::exception &exc)
-    {
-      std::cerr << std::endl
-                << std::endl
-                << "----------------------------------------------------"
-                << std::endl;
-      std::cerr << "Exception on processing: " << std::endl
-                << exc.what() << std::endl
-                << "Aborting!" << std::endl
-                << "----------------------------------------------------"
-                << std::endl;
+  {
+    std::cerr << std::endl
+              << std::endl
+              << "----------------------------------------------------"
+              << std::endl;
+    std::cerr << "Exception on processing: " << std::endl
+              << exc.what() << std::endl
+              << "Aborting!" << std::endl
+              << "----------------------------------------------------"
+              << std::endl;
 
-      return 1;
-    }
+    return 1;
+  }
   catch (...)
-    {
-      std::cerr << std::endl
-                << std::endl
-                << "----------------------------------------------------"
-                << std::endl;
-      std::cerr << "Unknown exception!" << std::endl
-                << "Aborting!" << std::endl
-                << "----------------------------------------------------"
-                << std::endl;
-      return 1;
-    }
+  {
+    std::cerr << std::endl
+              << std::endl
+              << "----------------------------------------------------"
+              << std::endl;
+    std::cerr << "Unknown exception!" << std::endl
+              << "Aborting!" << std::endl
+              << "----------------------------------------------------"
+              << std::endl;
+    return 1;
+  }
 
   return 0;
 }
