@@ -16,7 +16,15 @@ namespace TimeIntegratorConcretization
     struct Concretize;
 
     /**
-     * @brief Specialization of Concretize for stage_3_order_3 TimeIntegrator.
+     * @brief Specialization of Concretize for stage_1_order_1 TimeIntegrator.
+     */
+    template <typename Operator, int dim, int fe_degree>
+    struct Concretize<Operator, dim,  fe_degree,  TimeIntegrators::stage_1_order_1>
+    {
+        typedef LowStorageRungeKuttaIntegrator<Operator, dim, fe_degree, stage_1_order_1> type;
+    };
+    /**
+     * @brief Specialization of Concretize for stage_2_order_2 TimeIntegrator.
      */
     template <typename Operator, int dim, int fe_degree>
     struct Concretize<Operator, dim,  fe_degree,  TimeIntegrators::stage_2_order_2>

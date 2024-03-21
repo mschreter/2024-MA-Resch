@@ -33,11 +33,11 @@ void OperatorData<dim, fe_degree>::reinit()
     std::vector<const DoFHandler<dim> *> dof_handlers(
         {&dof_handler_, &dof_handler_legendre_, &dof_handler_vel_});
     MappingQGeneric<dim> mapping(fe_degree);
-    Quadrature<1> quadrature = QGauss<1>(fe_degree + 1);
-    Quadrature<1> quadrature_mass = QGauss<1>(fe_degree + 1);
+    Quadrature<dim> quadrature = QGauss<dim>(fe_degree + 1);
+    Quadrature<dim> quadrature_mass = QGauss<dim>(fe_degree + 1);
     // QGauss<1>(fe_degree + 1) gives inaccurate results for the norm computation.
     // Use overintegration or GaussLobatto quadrature for norm computation.
-    Quadrature<1> quadrature_norm = QGauss<1>(fe_degree + 2);
+    Quadrature<dim> quadrature_norm = QGauss<dim>(fe_degree + 2);
     typename MatrixFree<dim, Number>::AdditionalData additional_data;
     additional_data.overlap_communication_computation = false;
     additional_data.mapping_update_flags =
@@ -55,7 +55,7 @@ void OperatorData<dim, fe_degree>::reinit()
     data_.reinit(mapping,
                  dof_handlers,
                  constraints,
-                 std::vector<Quadrature<1>>{{quadrature, quadrature_mass, quadrature_norm}},
+                 std::vector<Quadrature<dim>>{{quadrature, quadrature_mass, quadrature_norm}},
                  additional_data);
 }
 #endif // OPERATOR_DATA_H

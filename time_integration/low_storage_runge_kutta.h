@@ -23,6 +23,13 @@ public:
     switch (scheme)
     {
 
+            case stage_1_order_1:
+    {
+      bi = {{1.0}};
+      ai = {{}};
+      break;
+    }
+
       case stage_2_order_2:
     {
       bi = {{0.5, 0.5}};
@@ -103,12 +110,13 @@ public:
                     VectorType &vec_ki,
                     TimerOutput &computing_timer) const
   {
+
     AssertDimension(ai.size() + 1, bi.size());
     ri = solution;  
     perform_stage(current_time,
                   bi[0] * time_step,
                   ai[0] * time_step,
-                  solution,
+                  ri,
                   solution,
                   computing_timer);
     double sum_previous_bi = 0;
@@ -125,6 +133,8 @@ public:
                     computing_timer);
       sum_previous_bi += bi[stage - 1];
     }
+
+
   }
 
   //void prepare_buffer_interpolation() const {}
@@ -168,7 +178,8 @@ void local_apply_inverse_mass_matrix(
                      TimerOutput &computing_timer) const
   {
     
-    
+
+
     pde_operator_.apply_operator(time, ki, ri);
 
     {

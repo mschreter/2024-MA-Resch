@@ -7,10 +7,15 @@
 #include <deal.II/base/mpi.h>
 #include <deal.II/base/config.h>
 #include <ostream>
+#include <deal.II/lac/solver_richardson.h>
 
 #include "../levelset_problem_parameters.h"
 
 using namespace dealii;
+
+
+
+
 
 
 template <typename Operator, int dim, int fe_degree>
@@ -46,7 +51,7 @@ public:
 private:
     void create_right_hand_side(bool const zero_out) const;
 
-    void local_apply_inverse_mass_matrix(const MatrixFree<dim, Number> &data_,
+    void local_apply_inverse_mass_matrix(const MatrixFree<dim, Number> &data,
                                          LinearAlgebra::distributed::Vector<Number> &dst,
                                          const LinearAlgebra::distributed::Vector<Number> &src,
                                          const std::pair<unsigned int, unsigned int> &cell_range) const;
@@ -56,8 +61,8 @@ private:
     double const Theta_;
 
     mutable double dt_;
-    mutable double current_time_;
-    mutable bool update_preconditioner_;
+    mutable double old_time_;
+
     mutable LinearAlgebra::distributed::Vector<Number> old_solution_;
     mutable LinearAlgebra::distributed::Vector<Number> right_hand_side_;
     const LevelSetProblemParameters &param_;
@@ -91,23 +96,23 @@ template <typename Operator, int dim, int fe_degree>
 void OneStepTheta<Operator, dim, fe_degree>::vmult(LinearAlgebra::distributed::Vector<Number> &dst,
                                                    const LinearAlgebra::distributed::Vector<Number> &src) const
 {
-    pde_operator_.apply_operator(current_time_ + dt_, dst, src);
 
-    pde_operator_.operator_data_.data_.cell_loop(
-        &OneStepTheta<Operator, dim, fe_degree>::local_apply_inverse_mass_matrix,
-        this,
-        dst,
-        dst,
-        std::function<void(const unsigned int, const unsigned int)>(),
-        [&](const unsigned int start_range, const unsigned int end_range)
-        {
-            DEAL_II_OPENMP_SIMD_PRAGMA
-            for (unsigned int i = start_range; i < end_range; ++i)
-            {
-                dst.local_element(i) *= -Theta_ * dt_;
-                dst.local_element(i) += src.local_element(i);
-            }
-        });
+
+    dst = 0;
+    pde_operator_.apply_operator(old_time_ + dt_, dst, src);
+
+
+pde_operator_.operator_data_.data_.cell_loop(
+      &OneStepTheta<Operator,dim, fe_degree>::local_apply_inverse_mass_matrix,
+      this,
+      dst,
+      dst);
+    dst *= -1.0;
+    dst *= Theta_ * dt_;
+    dst.add(1.0, src);
+
+        
+
 }
 
 /* Creates the right hand side of the solver*/
@@ -119,23 +124,21 @@ void OneStepTheta<Operator, dim, fe_degree>::create_right_hand_side(bool const z
     {
         right_hand_side_ = 0;
     }
-     pde_operator_.apply_operator(current_time_, right_hand_side_, old_solution_);
 
-    pde_operator_.operator_data_.data_.cell_loop(
-        &OneStepTheta<Operator, dim, fe_degree>::local_apply_inverse_mass_matrix,
-        this,
-        right_hand_side_,
-        right_hand_side_,
-        std::function<void(const unsigned int, const unsigned int)>(),
-        [&](const unsigned int start_range, const unsigned int end_range)
-        {
-            DEAL_II_OPENMP_SIMD_PRAGMA
-            for (unsigned int i = start_range; i < end_range; ++i)
-            {
-                right_hand_side_.local_element(i) *= (1.0 - Theta_) * dt_;
-                right_hand_side_.local_element(i) += old_solution_.local_element(i);
-            }
-        });
+    
+     pde_operator_.apply_operator(old_time_, right_hand_side_, old_solution_);
+
+        pde_operator_.operator_data_.data_.cell_loop(
+      &OneStepTheta<Operator,dim, fe_degree>::local_apply_inverse_mass_matrix,
+      this,
+      right_hand_side_,
+      right_hand_side_);
+
+    right_hand_side_ *= (1.0 - Theta_) * dt_;
+    right_hand_side_.add(1.0, old_solution_);
+
+
+
 }
 
 /* Perform one time step of the one step theta method*/
@@ -149,50 +152,55 @@ void OneStepTheta<Operator, dim, fe_degree>::perform_time_step([[maybe_unused]] 
 {
     old_solution_ = next_solution;
     dt_ = time_step;
-    current_time_ = current_time;
-
+    old_time_ = current_time;
 
 
     create_right_hand_side(true);
 
-    pde_operator_.set_velocity_operator(current_time_+dt_);
+    pde_operator_.set_velocity_operator(old_time_+time_step);
 
-    //The velocity field needs only to be updated once and not in ervy call to vmult
+    //The velocity field needs only to be updated once and not in every call to vmult
     pde_operator_.update_velocity_ = false;
 
-    SolverControl solver_control(1000, old_solution_.l2_norm() * 1e-9);
+    //SolverControl solver_control(2000, right_hand_side_.l2_norm()*1e-8);
+        SolverControl solver_control(2000);
+
 
     // Solver must be able to handle nonsymmetry
-    SolverGMRES<LinearAlgebra::distributed::Vector<Number>> solver(solver_control);
-    solver.solve(*this, next_solution, right_hand_side_, PreconditionIdentity());
-    int iterations = solver_control.last_step();
-    min_iterations = std::min(min_iterations, iterations);
-    max_iterations = std::max(max_iterations, iterations);
-    total_iterations += iterations;
-    counter_++;
+    //SolverGMRES<LinearAlgebra::distributed::Vector<Number>> solver(solver_control);
 
-    pde_operator_.update_velocity_ = true;
+
+          SolverRichardson<LinearAlgebra::distributed::Vector<Number>> solver(solver_control);
+          solver.set_omega(0.1);
+    solver.solve(*this, next_solution, right_hand_side_, PreconditionIdentity());
+    
+   // int iterations = solver_control.last_step();
+   // min_iterations = std::min(min_iterations, iterations);
+   // max_iterations = std::max(max_iterations, iterations);
+   // total_iterations += iterations;
+   // counter_++;
+       pde_operator_.update_velocity_ = true;
 }
 
 template <typename Operator, int dim, int fe_degree>
-void OneStepTheta<Operator, dim, fe_degree>::local_apply_inverse_mass_matrix(const MatrixFree<dim, Number> &data_,
+void OneStepTheta<Operator, dim, fe_degree>::local_apply_inverse_mass_matrix(const MatrixFree<dim, Number> &data,
                                                                              LinearAlgebra::distributed::Vector<Number> &dst,
                                                                              const LinearAlgebra::distributed::Vector<Number> &src,
                                                                              const std::pair<unsigned int, unsigned int> &cell_range) const
 {
-    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval(data_, 0, 1);
+    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval(data, 0, 1);
 
     MatrixFreeOperators::CellwiseInverseMassMatrix<dim, fe_degree, 1, Number> inverse(eval);
 
     for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
-    {
+      {
         eval.reinit(cell);
         eval.read_dof_values(src);
 
         inverse.apply(eval.begin_dof_values(), eval.begin_dof_values());
 
         eval.set_dof_values(dst);
-    }
+      }
 }
 
 #endif // ONE_STEP_THETA
