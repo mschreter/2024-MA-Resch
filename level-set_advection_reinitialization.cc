@@ -488,43 +488,7 @@ namespace LevelSet
         break;
       }
 
-      case 7:
-      {
-        // Hagen-Poiseuille flow
-
-        double const mu = 0.01;
-        double const dp_dx = 1.0;
-        double const Radius = 0.15;
-        double const x0 = 0.5;
-        double const y0 = 0.5;
-
-        if (component == 0)
-        {
-          return 0.0;
-        }
-
-        if (component == 1)
-        {
-          return 0.0;
-        }
-
-        if (component == 2)
-        {
-
-          double const delta_x = p[0] - x0;
-          double const delta_y = p[1] - y0;
-          double const r_squared = delta_x * delta_x + delta_y * delta_y;
-
-          if (r_squared <= (Radius * Radius))
-          {
-            return 1.0 / (4.0 * mu) * dp_dx * Radius * Radius * (r_squared / Radius / Radius - 1);
-          }
-          else
-          {
-            return 0.0;
-          }
-        }
-      }
+     
 
       default:
         AssertThrow(false, ExcNotImplemented());
@@ -1734,10 +1698,10 @@ namespace LevelSet
     const Number y_center = 0.75;
     const Number z_center = 0.;
     // Exact radius of interface for the current test case
-    const Number r_interface = 0.15;
+    //const Number r_interface = 0.15;
     // Interval from the inteface, in which the norm should be calculated
     // const Number epsilon = 0.02;
-    const Number epsilon = RI_distance * 0.5;
+    //const Number epsilon = RI_distance * 0.5;
 
     Number norm_difference = 0.;
     Number norm_analytical = 0.;
@@ -1764,7 +1728,7 @@ namespace LevelSet
       for (unsigned int q = 0; q < phi.n_q_points; ++q)
       {
         // calculate radius at the current quadrature point
-        auto r = compute_radius.value(phi.quadrature_point(q));
+        //auto r = compute_radius.value(phi.quadrature_point(q));
 
         // calculate deviation from solution
         auto sol_difference = std::abs(exact_solution.value(phi.quadrature_point(q)) - phi.get_value(q));

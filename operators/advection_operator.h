@@ -169,43 +169,6 @@ double TransportSpeed<dim>::value(const Point<dim> &p,
       break;
     }
 
-    case 7:
-    {
-      // Hagen-Poiseuille flow test case (channel flow), (domain: [0,1]x[0,1])
-      double const x0 = 0.5;
-      double const y0 = 0.5;
-
-      double const R = 0.15;
-      double const nu = 0.01;
-      double const dpdx = 0.5;
-
-      if (component == 0)
-      {
-        return 0.0;
-      }
-
-      if (component == 1)
-      {
-        return 0.0;
-      }
-
-      if (component == 2)
-      {
-        double const r2 = (p[0] - x0) * (p[0] - x0) + (p[1] - y0) * (p[1] - y0);
-
-        if (r2 <= R * R)
-        {
-          return -R * R * dpdx / (4.0 * nu) * (1.0 - r2 / R / R);
-        }
-        else
-        {
-          return 0.0;
-        }
-
-        break;
-      }
-    }
-
     default:
       AssertThrow(false, ExcNotImplemented());
     }
@@ -234,7 +197,7 @@ public:
                              transport_speed,
                              velocity_operator_);
 
-    velocity_operator_.update_ghost_values();
+    // velocity_operator_.update_ghost_values();
   }
 
   void apply_operator(double const time, LinearAlgebra::distributed::Vector<Number> &dst, LinearAlgebra::distributed::Vector<Number> const &src) const;
@@ -249,8 +212,7 @@ public:
   }
 
 private:
-  mutable LinearAlgebra::distributed::Vector<Number>
-      velocity_operator_;
+  mutable LinearAlgebra::distributed::Vector<Number> velocity_operator_;
   LevelSetProblemParameters const &param_;
 
   void
@@ -262,13 +224,13 @@ private:
 
   void
   local_apply_inhomogenous_domain(
-      const MatrixFree<dim, Number> &data,
-      LinearAlgebra::distributed::Vector<Number> &dst,
-      const LinearAlgebra::distributed::Vector<Number> &src,
-      const std::pair<unsigned int, unsigned int> &cell_range) const;
+      [[maybe_unused]] const MatrixFree<dim, Number> &data,
+      [[maybe_unused]] LinearAlgebra::distributed::Vector<Number> &dst,
+      [[maybe_unused]] const LinearAlgebra::distributed::Vector<Number> &src,
+      [[maybe_unused]] const std::pair<unsigned int, unsigned int> &cell_range) const;
 
-void
-local_apply_inner_face(
+  void
+  local_apply_inner_face(
       const MatrixFree<dim, Number> &data,
       LinearAlgebra::distributed::Vector<Number> &dst,
       const LinearAlgebra::distributed::Vector<Number> &src,
@@ -276,10 +238,10 @@ local_apply_inner_face(
 
   void
   local_apply_inhomogenous_inner_face(
-      const MatrixFree<dim, Number> &data,
-      LinearAlgebra::distributed::Vector<Number> &dst,
-      const LinearAlgebra::distributed::Vector<Number> &src,
-      const std::pair<unsigned int, unsigned int> &cell_range) const;
+      [[maybe_unused]] const MatrixFree<dim, Number> &data,
+      [[maybe_unused]] LinearAlgebra::distributed::Vector<Number> &dst,
+      [[maybe_unused]] const LinearAlgebra::distributed::Vector<Number> &src,
+      [[maybe_unused]] const std::pair<unsigned int, unsigned int> &cell_range) const;
 
   void
   local_apply_homogenous_boundary_face(
@@ -290,10 +252,10 @@ local_apply_inner_face(
 
   void
   local_apply_inhomogenous_boundary_face(
-      const MatrixFree<dim, Number> &data,
-      LinearAlgebra::distributed::Vector<Number> &dst,
-      const LinearAlgebra::distributed::Vector<Number> &src,
-      const std::pair<unsigned int, unsigned int> &cell_range) const;
+      [[maybe_unused]] const MatrixFree<dim, Number> &data,
+      [[maybe_unused]] LinearAlgebra::distributed::Vector<Number> &dst,
+      [[maybe_unused]] const LinearAlgebra::distributed::Vector<Number> &src,
+      [[maybe_unused]] const std::pair<unsigned int, unsigned int> &cell_range) const;
 
   double RI_distance = 0.0;
   mutable double time_ = 0.0;
@@ -338,10 +300,10 @@ void AdvectionOperator<dim, fe_degree>::local_apply_domain(
 
 template <int dim, int fe_degree>
 void AdvectionOperator<dim, fe_degree>::local_apply_inhomogenous_domain(
-    const MatrixFree<dim, Number> &data,
-    LinearAlgebra::distributed::Vector<Number> &dst,
-    const LinearAlgebra::distributed::Vector<Number> &src,
-    const std::pair<unsigned int, unsigned int> &cell_range) const
+    [[maybe_unused]] const MatrixFree<dim, Number> &data,
+    [[maybe_unused]] LinearAlgebra::distributed::Vector<Number> &dst,
+    [[maybe_unused]] const LinearAlgebra::distributed::Vector<Number> &src,
+    [[maybe_unused]] const std::pair<unsigned int, unsigned int> &cell_range) const
 {
 }
 
@@ -388,10 +350,10 @@ void AdvectionOperator<dim, fe_degree>::local_apply_inner_face(
 
 template <int dim, int fe_degree>
 void AdvectionOperator<dim, fe_degree>::local_apply_inhomogenous_inner_face(
-    const MatrixFree<dim, Number> &data,
-    LinearAlgebra::distributed::Vector<Number> &dst,
-    const LinearAlgebra::distributed::Vector<Number> &src,
-    const std::pair<unsigned int, unsigned int> &face_range) const
+    [[maybe_unused]] const MatrixFree<dim, Number> &data,
+    [[maybe_unused]] LinearAlgebra::distributed::Vector<Number> &dst,
+    [[maybe_unused]] const LinearAlgebra::distributed::Vector<Number> &src,
+    [[maybe_unused]] const std::pair<unsigned int, unsigned int> &face_range) const
 {
 }
 
@@ -423,12 +385,14 @@ void AdvectionOperator<dim, fe_degree>::local_apply_homogenous_boundary_face(
       const auto normal_vector = eval_minus.get_normal_vector(q);
 
       dealii::VectorizedArray<double> u_plus;
-      if(boundary_id==0){//Inflow
-        u_plus = u_minus*0.0;
-      } else {
-        u_plus=u_minus;
+      if (boundary_id == 0)
+      { // Inflow
+        u_plus = u_minus * 0.0;
       }
-
+      else
+      {
+        u_plus = u_minus;
+      }
 
       // Compute the flux
       const auto normal_times_speed = normal_vector * speed;
@@ -446,10 +410,10 @@ void AdvectionOperator<dim, fe_degree>::local_apply_homogenous_boundary_face(
 
 template <int dim, int fe_degree>
 void AdvectionOperator<dim, fe_degree>::local_apply_inhomogenous_boundary_face(
-    const MatrixFree<dim, Number> &data,
-    LinearAlgebra::distributed::Vector<Number> &dst,
-    const LinearAlgebra::distributed::Vector<Number> &src,
-    const std::pair<unsigned int, unsigned int> &face_range) const
+    [[maybe_unused]] const MatrixFree<dim, Number> &data,
+    [[maybe_unused]] LinearAlgebra::distributed::Vector<Number> &dst,
+    [[maybe_unused]] const LinearAlgebra::distributed::Vector<Number> &src,
+    [[maybe_unused]] const std::pair<unsigned int, unsigned int> &face_range) const
 {
   FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_minus(data, true);
   FEFaceEvaluation<dim, fe_degree, fe_degree + 1, dim, Number> eval_vel(data, true, 2);
@@ -477,18 +441,19 @@ void AdvectionOperator<dim, fe_degree>::local_apply_inhomogenous_boundary_face(
       // const auto u_plus = std::sin(4.0*numbers::PI*(-1.1*time_));
 
       // Inhomogenous boundary conditions
-const auto u_plus  = std::sin(4.0*numbers::PI*(-1.1*time_));
-
+      const auto u_plus = std::sin(4.0 * numbers::PI * (-1.1 * time_));
 
       // Compute the flux
       const auto normal_times_speed = normal_vector * speed;
       auto flux_times_normal = 0.5 * ((u_minus + u_plus) * normal_times_speed +
-                                            std::abs(normal_times_speed) * (u_minus - u_plus));
+                                      std::abs(normal_times_speed) * (u_minus - u_plus));
 
-      if(boundary_id==0){//Inflow
-        
-      } else {
-        flux_times_normal*=0.0;
+      if (boundary_id == 0)
+      { // Inflow
+      }
+      else
+      {
+        flux_times_normal *= 0.0;
       }
 
       eval_minus.submit_value(-flux_times_normal, q);
@@ -515,8 +480,7 @@ void AdvectionOperator<dim, fe_degree>::apply_operator(double const time, Linear
                                   MatrixFree<dim, Number>::DataAccessOnFaces::values);
 }
 
-
-/*dst MUST not be set to zero when applied*/
+/*dst MUST NOT be set to zero when applied*/
 template <int dim, int fe_degree>
 
 void AdvectionOperator<dim, fe_degree>::apply_dirichlet_boundary_operator(double const time, LinearAlgebra::distributed::Vector<Number> &dst, LinearAlgebra::distributed::Vector<Number> const &src) const

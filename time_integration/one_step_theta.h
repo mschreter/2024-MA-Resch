@@ -62,7 +62,7 @@ private:
     const LevelSetProblemParameters &param_;
 
     ConditionalOStream pcout;
-    mutable int min_iterations = std::numeric_limits<double>::infinity();
+    mutable int min_iterations = std::numeric_limits<int>::infinity();
     mutable int total_iterations = 0;
     mutable int max_iterations = 0;
     mutable int counter_ = 0;
@@ -72,16 +72,20 @@ template <typename Operator, int dim, int fe_degree>
 OneStepTheta<Operator, dim, fe_degree>::OneStepTheta(Operator &pde_operator,
                                                      const LevelSetProblemParameters &param,
                                                      LinearAlgebra::distributed::Vector<Number> const &) : pde_operator_(pde_operator),
+                                                                                                           Theta_(param.Theta_advection),
                                                                                                            param_(param),
-                                                                                                           pcout(std::cout, Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0),
-                                                                                                           Theta_(param.Theta_advection) {}
+                                                                                                           pcout(std::cout, Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+{
+}
 
 template <typename Operator, int dim, int fe_degree>
 OneStepTheta<Operator, dim, fe_degree>::OneStepTheta(Operator &pde_operator,
                                                      const LevelSetProblemParameters &param) : pde_operator_(pde_operator),
+                                                                                               Theta_(param.Theta_IMEX),
                                                                                                param_(param),
-                                                                                               pcout(std::cout, Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0),
-                                                                                               Theta_(param.Theta_IMEX) {}
+                                                                                               pcout(std::cout, Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+{
+}
 
 /* Left hand operator of the solver*/
 template <typename Operator, int dim, int fe_degree>
@@ -112,7 +116,7 @@ void OneStepTheta<Operator, dim, fe_degree>::create_right_hand_side(bool const z
     if (zero_out)
     {
         right_hand_side_ = 0;
-        buffer=0;
+        buffer = 0;
     }
 
     pde_operator_.apply_operator(old_time_, right_hand_side_, old_solution_);
@@ -120,14 +124,12 @@ void OneStepTheta<Operator, dim, fe_degree>::create_right_hand_side(bool const z
     right_hand_side_ *= (1.0 - Theta_);
 
     pde_operator_.apply_dirichlet_boundary_operator(old_time_, buffer, old_solution_);
-    right_hand_side_.add(1.0-Theta_,buffer);
+    right_hand_side_.add(1.0 - Theta_, buffer);
 
-    buffer=0;
+    buffer = 0;
 
-
-    pde_operator_.apply_dirichlet_boundary_operator(old_time_+dt_, buffer, old_solution_);
-    right_hand_side_.add(Theta_,buffer);
-
+    pde_operator_.apply_dirichlet_boundary_operator(old_time_ + dt_, buffer, old_solution_);
+    right_hand_side_.add(Theta_, buffer);
 
     right_hand_side_ *= dt_;
 
@@ -159,20 +161,15 @@ void OneStepTheta<Operator, dim, fe_degree>::perform_time_step([[maybe_unused]] 
 
     // The velocity field needs only to be updated once and not in every call to vmult
     pde_operator_.update_velocity_ = false;
-
     // SolverControl solver_control(2000, right_hand_side_.l2_norm()*1e-8);
     SolverControl solver_control(2000);
 
-    
-    //      SolverRichardson<LinearAlgebra::distributed::Vector<Number>> solver(solver_control);
-    //      solver.set_omega(0.1);
-
     // Solver must be able to handle nonsymmetry
-     SolverGMRES<LinearAlgebra::distributed::Vector<Number>> solver(solver_control);
+    SolverGMRES<LinearAlgebra::distributed::Vector<Number>> solver(solver_control);
 
     solver.solve(*this, next_solution, right_hand_side_, PreconditionIdentity());
 
-    // int iterations = solver_control.last_step();
+    // // int iterations = solver_control.last_step();
     // min_iterations = std::min(min_iterations, iterations);
     // max_iterations = std::max(max_iterations, iterations);
     // total_iterations += iterations;
