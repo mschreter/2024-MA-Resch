@@ -144,7 +144,7 @@ namespace LevelSet
     Number
     value(const Point<dim, Number> &p) const
     {
-          const double t = this->get_time();
+      const double t = this->get_time();
 
       if (dim == 2)
       {
@@ -223,7 +223,7 @@ namespace LevelSet
           break;
         }
 
-         case 8:
+        case 8:
         {
           // bubble vortex test case, (domain: [0,1]^2)
           return std::sqrt((p[0] - 0.5) * (p[0] - 0.5) + (p[1] - 0.75) * (p[1] - 0.75)) - 0.15;
@@ -233,8 +233,7 @@ namespace LevelSet
 
         case 9:
         {
-          return std::sin(4.0*numbers::PI*(p[0]-1.1*t));
-          
+          return std::sin(4.0 * numbers::PI * (p[0] - 1.1 * t));
 
           break;
         }
@@ -242,9 +241,8 @@ namespace LevelSet
         case 10:
         {
 
- auto xx= std::max(std::min(p[0]-1.1*t,p[0]*0.0+1.0),p[0]*0.0);
-          return (std::cos(xx*numbers::PI)+1.0)*0.5; 
-          
+          auto xx = std::max(std::min(p[0] - 1.1 * t, p[0] * 0.0 + 1.0), p[0] * 0.0);
+          return (std::cos(xx * numbers::PI) + 1.0) * 0.5;
 
           break;
         }
@@ -412,50 +410,48 @@ namespace LevelSet
         break;
       }
 
-          case 8:
-    {
-      // Bubble Rotated
-      if (component == 0)
+      case 8:
       {
-        return numbers::PI * 2.0*(0.5 - p[1]);
-      }
-      else if (component == 1)
-      {
-        return numbers::PI * 2.0*(p[0] - 0.5);
-      }
+        // Bubble Rotated
+        if (component == 0)
+        {
+          return numbers::PI * 2.0 * (0.5 - p[1]);
+        }
+        else if (component == 1)
+        {
+          return numbers::PI * 2.0 * (p[0] - 0.5);
+        }
 
-      break;
-    }
-
-
-case 9:
-    {
-      if (component == 0)
-      {
-        return 1.1;
-      }
-      else if (component == 1)
-      {
-        return 0.0;
+        break;
       }
 
-      break;
-    }
-
-    case 10:
-    {
-      if (component == 0)
+      case 9:
       {
-        return 1.1;
+        if (component == 0)
+        {
+          return 1.1;
+        }
+        else if (component == 1)
+        {
+          return 0.0;
+        }
+
+        break;
       }
-      else if (component == 1)
+
+      case 10:
       {
-        return 0.0;
+        if (component == 0)
+        {
+          return 1.1;
+        }
+        else if (component == 1)
+        {
+          return 0.0;
+        }
+
+        break;
       }
-
-      break;
-    }
-
 
       default:
         AssertThrow(false, ExcNotImplemented());
@@ -538,15 +534,15 @@ case 9:
     return 0;
   }
 
-  
   template <int dim, int fe_degree>
   class LevelSetOperation
   {
   public:
     using Number = double;
 
-    LevelSetOperation(const LevelSetProblemParameters &param): param(param)
-    {}
+    LevelSetOperation(const LevelSetProblemParameters &param) : param(param)
+    {
+    }
 
     void
     reinit(const DoFHandler<dim> &dof_handler,
@@ -555,7 +551,7 @@ case 9:
 
     void
     initialize_dof_vector(LinearAlgebra::distributed::Vector<Number> &vec,
-                          const unsigned int                          dof_handler_index)
+                          const unsigned int dof_handler_index)
     {
       data.initialize_dof_vector(vec, dof_handler_index);
     }
@@ -563,68 +559,68 @@ case 9:
     template <bool is_right, uint component>
     void
     apply_RI_grad(const LinearAlgebra::distributed::Vector<Number> &src,
-                  LinearAlgebra::distributed::Vector<Number>       &dst);
+                  LinearAlgebra::distributed::Vector<Number> &dst);
 
     void
-    perform_stage(const Number                                     current_time,
-                  const Number                                     factor_solution,
-                  const Number                                     factor_ai,
+    perform_stage(const Number current_time,
+                  const Number factor_solution,
+                  const Number factor_ai,
                   const LinearAlgebra::distributed::Vector<Number> &current_ri,
-                  LinearAlgebra::distributed::Vector<Number>       &vec_ki,
-                  LinearAlgebra::distributed::Vector<Number>       &solution,
-                  LinearAlgebra::distributed::Vector<Number>       &next_ri,
-                  TimerOutput                                      &computing_timer) const;
+                  LinearAlgebra::distributed::Vector<Number> &vec_ki,
+                  LinearAlgebra::distributed::Vector<Number> &solution,
+                  LinearAlgebra::distributed::Vector<Number> &next_ri,
+                  TimerOutput &computing_timer) const;
 
     void
-    perform_stage_RI(const Number                                  current_time,
-                     const Number                                  factor_solution,
-                     const Number                                  factor_ai,
-                     LinearAlgebra::distributed::Vector<Number>    &vec_ki,
-                     LinearAlgebra::distributed::Vector<Number>    &solution,
-                     LinearAlgebra::distributed::Vector<Number>    &next_ri,
-                     LinearAlgebra::distributed::Vector<Number>    &num_Hamiltonian,
-                     TimerOutput                                   &computing_timer) const;
+    perform_stage_RI(const Number current_time,
+                     const Number factor_solution,
+                     const Number factor_ai,
+                     LinearAlgebra::distributed::Vector<Number> &vec_ki,
+                     LinearAlgebra::distributed::Vector<Number> &solution,
+                     LinearAlgebra::distributed::Vector<Number> &next_ri,
+                     LinearAlgebra::distributed::Vector<Number> &num_Hamiltonian,
+                     TimerOutput &computing_timer) const;
 
     void
     project_initial(LinearAlgebra::distributed::Vector<Number> &dst) const;
 
-    double 
-    compute_L2_norm_in_interface_region(double const time,const LinearAlgebra::distributed::Vector<Number> &solution,const LinearAlgebra::distributed::Vector<Number> &initial_solution) const;
+    double
+    compute_L2_norm_in_interface_region(double const time, const LinearAlgebra::distributed::Vector<Number> &solution, const LinearAlgebra::distributed::Vector<Number> &initial_solution) const;
 
     Tensor<1, 2>
     compute_mass_and_energy(const LinearAlgebra::distributed::Vector<Number> &vec) const;
 
     void
-    Godunov_Hamiltonian(const LinearAlgebra::distributed::Vector<Number>  &solution,
-                        LinearAlgebra::distributed::Vector<Number>        &num_Hamiltonian,
-                        LinearAlgebra::distributed::Vector<Number>        &Signum_smoothed,
-                        TimerOutput                                       &computing_timer);
+    Godunov_Hamiltonian(const LinearAlgebra::distributed::Vector<Number> &solution,
+                        LinearAlgebra::distributed::Vector<Number> &num_Hamiltonian,
+                        LinearAlgebra::distributed::Vector<Number> &Signum_smoothed,
+                        TimerOutput &computing_timer);
 
     void
-    apply_Hamiltonian(LinearAlgebra::distributed::Vector<Number>          &num_Hamiltonian,
-                      const LinearAlgebra::distributed::Vector<Number>    &Signum_smoothed,
-                      const LinearAlgebra::distributed::Vector<Number>    &solution) const;
+    apply_Hamiltonian(LinearAlgebra::distributed::Vector<Number> &num_Hamiltonian,
+                      const LinearAlgebra::distributed::Vector<Number> &Signum_smoothed,
+                      const LinearAlgebra::distributed::Vector<Number> &solution) const;
 
     void
-    Godunov_gradient(const LinearAlgebra::distributed::Vector<Number>     &solution,
-                     LinearAlgebra::distributed::Vector<Number>           &God_grad,
-                     TimerOutput                                          &computing_timer);
+    Godunov_gradient(const LinearAlgebra::distributed::Vector<Number> &solution,
+                     LinearAlgebra::distributed::Vector<Number> &God_grad,
+                     TimerOutput &computing_timer);
 
     void
-    Smoothed_signum(const LinearAlgebra::distributed::Vector<Number>      &solution,
-                    LinearAlgebra::distributed::Vector<Number>            &Signum_smoothed,
-                    LinearAlgebra::distributed::Vector<Number>            &God_grad,
-                    TimerOutput                                           &computing_timer,
-                    const uint                                            max_vertex_distance) const;
+    Smoothed_signum(const LinearAlgebra::distributed::Vector<Number> &solution,
+                    LinearAlgebra::distributed::Vector<Number> &Signum_smoothed,
+                    LinearAlgebra::distributed::Vector<Number> &God_grad,
+                    TimerOutput &computing_timer,
+                    const uint max_vertex_distance) const;
 
     void
     flatten_level_set(LinearAlgebra::distributed::Vector<Number> &solution) const;
 
     void
-    compute_local_viscosity(const LinearAlgebra::distributed::Vector<Number> &solution) const;	
+    compute_local_viscosity(const LinearAlgebra::distributed::Vector<Number> &solution) const;
 
     void
-    compute_RI_indicator(const LinearAlgebra::distributed::Vector<Number> & sol);
+    compute_RI_indicator(const LinearAlgebra::distributed::Vector<Number> &sol);
 
     const Number &
     get_RI_indicator() const;
@@ -633,13 +629,13 @@ case 9:
     get_viscosity_value() const;
 
     double
-    compute_area(const LinearAlgebra::distributed::Vector<Number>    &solution,
-                 const unsigned int                                   ls_dof_idx  = 0,
-                 const unsigned int                                   ls_quad_idx = 0) const;
+    compute_area(const LinearAlgebra::distributed::Vector<Number> &solution,
+                 const unsigned int ls_dof_idx = 0,
+                 const unsigned int ls_quad_idx = 0) const;
 
     double
-    compute_circularity(const LinearAlgebra::distributed::Vector<Number>  &solution,
-                        const DoFHandler<dim>                             &dof_handler) const;
+    compute_circularity(const LinearAlgebra::distributed::Vector<Number> &solution,
+                        const DoFHandler<dim> &dof_handler) const;
 
     void
     set_artificial_viscosity_refinement_flags(const LinearAlgebra::distributed::Vector<Number> &sol) const;
@@ -660,14 +656,14 @@ case 9:
     compute_penalty_parameter();
 
     void
-    vmult(LinearAlgebra::distributed::Vector<Number>        &dst,
-          const LinearAlgebra::distributed::Vector<Number>  &src) const;
+    vmult(LinearAlgebra::distributed::Vector<Number> &dst,
+          const LinearAlgebra::distributed::Vector<Number> &src) const;
 
     void
     apply_viscosity_implicit(LinearAlgebra::distributed::Vector<Number> &solution,
                              LinearAlgebra::distributed::Vector<Number> &rk_register,
-                             const double                                dt_RI,
-                             TimerOutput                                &computing_timer) const;
+                             const double dt_RI,
+                             TimerOutput &computing_timer) const;
 
     const unsigned int &
     get_CG_iterations() const
@@ -684,7 +680,7 @@ case 9:
     double
     get_cond_number() const
     {
-     return cond_number;
+      return cond_number;
     }
 
     void
@@ -697,211 +693,207 @@ case 9:
     compute_time_step_advection() const;
 
   private:
-    MatrixFree<dim, Number>                         data;
-    
-    const LevelSetProblemParameters                &param;
+    MatrixFree<dim, Number> data;
 
-    mutable Number                                  time;
-    mutable Number                                  dt_RI = 1.;
-    mutable Number                                  RI_ind = 0.;
-    mutable AlignedVector<VectorizedArray<Number>>  artificial_viscosity;
-    mutable AlignedVector<VectorizedArray<Number>>  array_penalty_parameter;
-    mutable Number                                  viscosity = 1.;
-    mutable Number                                  area = 1.;
-    mutable unsigned int                            CG_iterations = 0;
-    mutable Number                                  cond_number = 0.;
-    mutable Number                                  RI_distance = 0.;
+    AffineConstraints<Number> dirichlet_constraints;
+
+    const LevelSetProblemParameters &param;
+
+    mutable Number time;
+    mutable Number dt_RI = 1.;
+    mutable Number RI_ind = 0.;
+    mutable AlignedVector<VectorizedArray<Number>> artificial_viscosity;
+    mutable AlignedVector<VectorizedArray<Number>> array_penalty_parameter;
+    mutable Number viscosity = 1.;
+    mutable Number area = 1.;
+    mutable unsigned int CG_iterations = 0;
+    mutable Number cond_number = 0.;
+    mutable Number RI_distance = 0.;
 
     // auxiliary vectors for Godunov's scheme
-    LinearAlgebra::distributed::Vector<Number>      grad_x_l;
-    LinearAlgebra::distributed::Vector<Number>      grad_x_r;
-    LinearAlgebra::distributed::Vector<Number>      grad_y_l;
-    LinearAlgebra::distributed::Vector<Number>      grad_y_r;
-    LinearAlgebra::distributed::Vector<Number>      grad_z_l;
-    LinearAlgebra::distributed::Vector<Number>      grad_z_r;
+    LinearAlgebra::distributed::Vector<Number> grad_x_l;
+    LinearAlgebra::distributed::Vector<Number> grad_x_r;
+    LinearAlgebra::distributed::Vector<Number> grad_y_l;
+    LinearAlgebra::distributed::Vector<Number> grad_y_r;
+    LinearAlgebra::distributed::Vector<Number> grad_z_l;
+    LinearAlgebra::distributed::Vector<Number> grad_z_r;
 
-    LinearAlgebra::distributed::Vector<Number>      velocity_operator;
+    LinearAlgebra::distributed::Vector<Number> velocity_operator;
 
-    SmoothnessIndicator<dim, fe_degree>             indicator;
+    SmoothnessIndicator<dim, fe_degree> indicator;
 
     void
     local_apply_inverse_mass_matrix(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     local_apply_domain(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     template <uint component>
     void
     local_apply_domain_RI_grad(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     local_apply_domain_num_Hamiltonian(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     local_apply_domain_RI_diffusion(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     local_apply_domain_RI_diffusion_implicit(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     local_apply_inner_face(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     template <bool is_right, uint component>
     void
     local_apply_inner_face_RI_grad(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     local_apply_inner_face_RI_diffusion(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     local_apply_inner_face_RI_diffusion_implicit(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     local_apply_boundary_face(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     template <bool is_right, uint component>
     void
     local_apply_boundary_face_RI_grad(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     local_apply_boundary_face_RI_diffusion(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     local_apply_boundary_face_RI_diffusion_implicit(
-      const MatrixFree<dim, Number>                     &data,
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src,
-      const std::pair<unsigned int, unsigned int>       &cell_range) const;
+        const MatrixFree<dim, Number> &data,
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     void
     compute_artificial_viscosity() const;
 
     void
     create_rhs(
-      LinearAlgebra::distributed::Vector<Number>        &dst,
-      const LinearAlgebra::distributed::Vector<Number>  &src) const;
+        LinearAlgebra::distributed::Vector<Number> &dst,
+        const LinearAlgebra::distributed::Vector<Number> &src) const;
   };
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_inverse_mass_matrix(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &cell_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &cell_range) const
   {
     FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval(data, 0, 1);
 
     MatrixFreeOperators::CellwiseInverseMassMatrix<dim, fe_degree, 1, Number> inverse(eval);
 
     for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
-      {
-        eval.reinit(cell);
-        eval.read_dof_values(src);
+    {
+      eval.reinit(cell);
+      eval.read_dof_values(src);
 
-        inverse.apply(eval.begin_dof_values(), eval.begin_dof_values());
+      inverse.apply(eval.begin_dof_values(), eval.begin_dof_values());
 
-        eval.set_dof_values(dst);
-      }
+      eval.set_dof_values(dst);
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_domain(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &cell_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &cell_range) const
   {
-    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number>    eval(data);
-    FEEvaluation<dim, fe_degree, fe_degree + 1, dim, Number>  eval_vel(data, 2);
+    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval(data);
+    FEEvaluation<dim, fe_degree, fe_degree + 1, dim, Number> eval_vel(data, 2);
 
     for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+    {
+      eval.reinit(cell);
+      eval_vel.reinit(cell);
+
+      eval.gather_evaluate(src, EvaluationFlags::values);
+      eval_vel.gather_evaluate(velocity_operator, EvaluationFlags::values);
+
+      for (unsigned int q = 0; q < eval.n_q_points; ++q)
       {
-        eval.reinit(cell);
-        eval_vel.reinit(cell);
-
-        eval.gather_evaluate(src, EvaluationFlags::values);
-        eval_vel.gather_evaluate(velocity_operator, EvaluationFlags::values);
-
-        for (unsigned int q = 0; q < eval.n_q_points; ++q)
-          {
-            const auto speed = eval_vel.get_value(q);
-            const auto u     = eval.get_value(q);
-            const auto flux  = speed * u;
-            eval.submit_gradient(flux, q);
-          }
-
-        eval.integrate_scatter(EvaluationFlags::gradients, dst);
+        const auto speed = eval_vel.get_value(q);
+        const auto u = eval.get_value(q);
+        const auto flux = speed * u;
+        eval.submit_gradient(flux, q);
       }
+
+      eval.integrate_scatter(EvaluationFlags::gradients, dst);
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   template <uint component>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_domain_RI_grad(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &cell_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &cell_range) const
   {
     FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval(data);
 
@@ -910,164 +902,154 @@ case 9:
     unit_vector[component] = 1.0;
 
     for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+    {
+      eval.reinit(cell);
+
+      eval.gather_evaluate(src, EvaluationFlags::values);
+
+      for (unsigned int q = 0; q < eval.n_q_points; ++q)
       {
-        eval.reinit(cell);
-
-        eval.gather_evaluate(src, EvaluationFlags::values);
-
-        for (unsigned int q = 0; q < eval.n_q_points; ++q)
-          {
-            const auto u    = eval.get_value(q);
-            const auto flux = unit_vector * u;
-            eval.submit_gradient(-flux, q);
-          }
-
-        eval.integrate_scatter(EvaluationFlags::gradients, dst);
+        const auto u = eval.get_value(q);
+        const auto flux = unit_vector * u;
+        eval.submit_gradient(-flux, q);
       }
+
+      eval.integrate_scatter(EvaluationFlags::gradients, dst);
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_domain_num_Hamiltonian(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &cell_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &cell_range) const
   {
     FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval(data);
 
     for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+    {
+      eval.reinit(cell);
+
+      eval.gather_evaluate(src, EvaluationFlags::values);
+
+      for (unsigned int q = 0; q < eval.n_q_points; ++q)
       {
-        eval.reinit(cell);
-
-        eval.gather_evaluate(src, EvaluationFlags::values);
-
-        for (unsigned int q = 0; q < eval.n_q_points; ++q)
-          {
-            const auto u = eval.get_value(q);
-            // minus sign because the term is shifted to the right-hand side of the RI equation
-            eval.submit_value(-u, q);
-          }
-
-        eval.integrate_scatter(EvaluationFlags::values, dst);
+        const auto u = eval.get_value(q);
+        // minus sign because the term is shifted to the right-hand side of the RI equation
+        eval.submit_value(-u, q);
       }
+
+      eval.integrate_scatter(EvaluationFlags::values, dst);
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_domain_RI_diffusion(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &cell_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &cell_range) const
   {
     FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval(data);
 
     for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+    {
+      eval.reinit(cell);
+
+      eval.gather_evaluate(src, EvaluationFlags::gradients);
+
+      for (unsigned int q = 0; q < eval.n_q_points; ++q)
       {
-        eval.reinit(cell);
-
-        eval.gather_evaluate(src, EvaluationFlags::gradients);
-        
-        for (unsigned int q = 0; q < eval.n_q_points; ++q)
-          {
-            const auto flux  = viscosity * eval.get_gradient(q);
-            eval.submit_gradient(-flux, q);
-          }
-
-        eval.integrate_scatter(EvaluationFlags::gradients, dst);
+        const auto flux = viscosity * eval.get_gradient(q);
+        eval.submit_gradient(-flux, q);
       }
+
+      eval.integrate_scatter(EvaluationFlags::gradients, dst);
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_domain_RI_diffusion_implicit(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &cell_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &cell_range) const
   {
     FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval(data);
 
     for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+    {
+      eval.reinit(cell);
+
+      eval.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
+
+      for (unsigned int q = 0; q < eval.n_q_points; ++q)
       {
-        eval.reinit(cell);
-
-        eval.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
-        
-        for (unsigned int q = 0; q < eval.n_q_points; ++q)
-          {
-            // mass matrix
-            eval.submit_value(eval.get_value(q), q);
-            // consider time step size dt_RI for implicit scheme
-            const auto flux  = viscosity * eval.get_gradient(q) * dt_RI;
-            eval.submit_gradient(flux, q);
-          }
-
-        eval.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+        // mass matrix
+        eval.submit_value(eval.get_value(q), q);
+        // consider time step size dt_RI for implicit scheme
+        const auto flux = viscosity * eval.get_gradient(q) * dt_RI;
+        eval.submit_gradient(flux, q);
       }
-  }
-  
 
+      eval.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+    }
+  }
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_inner_face(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &face_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &face_range) const
   {
-    FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number>    eval_minus(data, true);
-    FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number>    eval_plus(data, false);
-    FEFaceEvaluation<dim, fe_degree, fe_degree + 1, dim, Number>  eval_vel(data, true, 2);
+    FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_minus(data, true);
+    FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_plus(data, false);
+    FEFaceEvaluation<dim, fe_degree, fe_degree + 1, dim, Number> eval_vel(data, true, 2);
 
     for (unsigned int face = face_range.first; face < face_range.second; face++)
+    {
+      eval_minus.reinit(face);
+      eval_plus.reinit(face);
+      eval_vel.reinit(face);
+
+      eval_minus.gather_evaluate(src, EvaluationFlags::values);
+      eval_plus.gather_evaluate(src, EvaluationFlags::values);
+      eval_vel.gather_evaluate(velocity_operator, EvaluationFlags::values);
+
+      for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
       {
-        eval_minus.reinit(face);
-        eval_plus.reinit(face);
-        eval_vel.reinit(face);
+        const auto speed = eval_vel.get_value(q);
+        const auto u_minus = eval_minus.get_value(q);
+        const auto u_plus = eval_plus.get_value(q);
+        const auto normal_vector_minus = eval_minus.get_normal_vector(q);
 
-        eval_minus.gather_evaluate(src, EvaluationFlags::values);
-        eval_plus.gather_evaluate(src, EvaluationFlags::values);
-        eval_vel.gather_evaluate(velocity_operator, EvaluationFlags::values);
+        const auto normal_times_speed = speed * normal_vector_minus;
+        const auto flux_times_normal_of_minus = 0.5 * ((u_minus + u_plus) * normal_times_speed +
+                                                       std::abs(normal_times_speed) * (u_minus - u_plus));
 
-        for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
-          {
-            const auto speed   = eval_vel.get_value(q);
-            const auto u_minus = eval_minus.get_value(q);
-            const auto u_plus  = eval_plus.get_value(q);
-            const auto normal_vector_minus = eval_minus.get_normal_vector(q);
-
-            const auto normal_times_speed         = speed * normal_vector_minus;
-            const auto flux_times_normal_of_minus = 0.5 * ((u_minus + u_plus) * normal_times_speed +
-                                                    std::abs(normal_times_speed) * (u_minus - u_plus));
-
-            eval_minus.submit_value(-flux_times_normal_of_minus, q);
-            eval_plus.submit_value(flux_times_normal_of_minus, q);
-          }
-
-        eval_minus.integrate_scatter(EvaluationFlags::values, dst);
-        eval_plus.integrate_scatter(EvaluationFlags::values, dst);
+        eval_minus.submit_value(-flux_times_normal_of_minus, q);
+        eval_plus.submit_value(flux_times_normal_of_minus, q);
       }
+
+      eval_minus.integrate_scatter(EvaluationFlags::values, dst);
+      eval_plus.integrate_scatter(EvaluationFlags::values, dst);
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   template <bool is_right, uint component>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_inner_face_RI_grad(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &face_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &face_range) const
   {
     FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_minus(data, true);
     FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_plus(data, false);
@@ -1075,382 +1057,363 @@ case 9:
     if (is_right)
     {
       for (unsigned int face = face_range.first; face < face_range.second; face++)
+      {
+        eval_minus.reinit(face);
+        eval_plus.reinit(face);
+
+        eval_minus.gather_evaluate(src, EvaluationFlags::values);
+        eval_plus.gather_evaluate(src, EvaluationFlags::values);
+
+        for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
         {
-          eval_minus.reinit(face);
-          eval_plus.reinit(face);
+          const auto u_minus = eval_minus.get_value(q);
+          const auto u_plus = eval_plus.get_value(q);
+          const auto normal_vector_minus = eval_minus.get_normal_vector(q);
 
-          eval_minus.gather_evaluate(src, EvaluationFlags::values);
-          eval_plus.gather_evaluate(src, EvaluationFlags::values);
+          const auto flux = compare_and_apply_mask<SIMDComparison::greater_than_or_equal>(
+              normal_vector_minus[component],
+              0.,
+              normal_vector_minus[component] * u_plus,
+              normal_vector_minus[component] * u_minus);
 
-          for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
-            {
-              const auto u_minus = eval_minus.get_value(q);
-              const auto u_plus  = eval_plus.get_value(q);
-              const auto normal_vector_minus = eval_minus.get_normal_vector(q);
-
-              const auto flux = compare_and_apply_mask<SIMDComparison::greater_than_or_equal>(
-                                    normal_vector_minus[component],
-                                    0.,
-                                    normal_vector_minus[component] * u_plus,
-                                    normal_vector_minus[component] * u_minus);
-
-              eval_minus.submit_value(flux, q);
-              eval_plus.submit_value(-flux, q);
-            }
-
-          eval_minus.integrate_scatter(EvaluationFlags::values, dst);
-          eval_plus.integrate_scatter(EvaluationFlags::values, dst);
+          eval_minus.submit_value(flux, q);
+          eval_plus.submit_value(-flux, q);
         }
+
+        eval_minus.integrate_scatter(EvaluationFlags::values, dst);
+        eval_plus.integrate_scatter(EvaluationFlags::values, dst);
+      }
     }
     else
     {
       for (unsigned int face = face_range.first; face < face_range.second; face++)
+      {
+        eval_minus.reinit(face);
+        eval_plus.reinit(face);
+
+        eval_minus.gather_evaluate(src, EvaluationFlags::values);
+        eval_plus.gather_evaluate(src, EvaluationFlags::values);
+
+        for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
         {
-          eval_minus.reinit(face);
-          eval_plus.reinit(face);
+          const auto u_minus = eval_minus.get_value(q);
+          const auto u_plus = eval_plus.get_value(q);
+          const auto normal_vector_minus = eval_minus.get_normal_vector(q);
 
-          eval_minus.gather_evaluate(src, EvaluationFlags::values);
-          eval_plus.gather_evaluate(src, EvaluationFlags::values);
+          const auto flux = compare_and_apply_mask<SIMDComparison::greater_than_or_equal>(
+              normal_vector_minus[component],
+              0.,
+              normal_vector_minus[component] * u_minus,
+              normal_vector_minus[component] * u_plus);
 
-          for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
-            {
-              const auto u_minus = eval_minus.get_value(q);
-              const auto u_plus  = eval_plus.get_value(q);
-              const auto normal_vector_minus = eval_minus.get_normal_vector(q);
-
-              const auto flux = compare_and_apply_mask<SIMDComparison::greater_than_or_equal>(
-                                    normal_vector_minus[component],
-                                    0.,
-                                    normal_vector_minus[component] * u_minus,
-                                    normal_vector_minus[component] * u_plus);
-
-              eval_minus.submit_value(flux, q);
-              eval_plus.submit_value(-flux, q);
-            }
-
-          eval_minus.integrate_scatter(EvaluationFlags::values, dst);
-          eval_plus.integrate_scatter(EvaluationFlags::values, dst);
+          eval_minus.submit_value(flux, q);
+          eval_plus.submit_value(-flux, q);
         }
+
+        eval_minus.integrate_scatter(EvaluationFlags::values, dst);
+        eval_plus.integrate_scatter(EvaluationFlags::values, dst);
+      }
     }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_inner_face_RI_diffusion(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &face_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &face_range) const
   {
     FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_minus(data, true);
     FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_plus(data, false);
 
     for (unsigned int face = face_range.first; face < face_range.second; face++)
+    {
+      eval_minus.reinit(face);
+      eval_plus.reinit(face);
+
+      eval_minus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
+      eval_plus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
+
+      const auto sigmaF = std::max(eval_minus.read_cell_data(array_penalty_parameter),
+                                   eval_plus.read_cell_data(array_penalty_parameter));
+
+      for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
       {
-        eval_minus.reinit(face);
-        eval_plus.reinit(face);
+        // 1st face integral
+        const auto u_minus = eval_minus.get_value(q);
+        const auto u_plus = eval_plus.get_value(q);
 
-        eval_minus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
-        eval_plus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
+        const auto flux_1 = 0.5 * (u_minus - u_plus) * viscosity;
 
-        const auto sigmaF = std::max(eval_minus.read_cell_data(array_penalty_parameter),
-                            eval_plus.read_cell_data(array_penalty_parameter));
+        eval_minus.submit_normal_derivative(flux_1, q);
+        eval_plus.submit_normal_derivative(flux_1, q);
 
-        for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
-          {
-            // 1st face integral
-            const auto u_minus = eval_minus.get_value(q);
-            const auto u_plus  = eval_plus.get_value(q);
+        // 2nd and 3rd (=penalty) face integral
+        const auto u_minus_normal_grad = eval_minus.get_normal_derivative(q);
+        const auto u_plus_normal_grad = eval_plus.get_normal_derivative(q);
 
-            const auto flux_1   = 0.5 * (u_minus - u_plus) * viscosity;
+        const auto flux_2 = 0.5 * (u_minus_normal_grad + u_plus_normal_grad) * viscosity - (u_minus - u_plus) * viscosity * sigmaF;
 
-            eval_minus.submit_normal_derivative(flux_1, q);
-            eval_plus.submit_normal_derivative(flux_1, q);
-
-            // 2nd and 3rd (=penalty) face integral 
-            const auto u_minus_normal_grad = eval_minus.get_normal_derivative(q);
-            const auto u_plus_normal_grad  = eval_plus.get_normal_derivative(q);
-
-            const auto flux_2 = 0.5 * (u_minus_normal_grad + u_plus_normal_grad) * viscosity
-                                -(u_minus - u_plus) * viscosity * sigmaF;
-
-            eval_minus.submit_value(flux_2, q);
-            eval_plus.submit_value(-flux_2, q);
-          }
-
-        eval_minus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
-        eval_plus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+        eval_minus.submit_value(flux_2, q);
+        eval_plus.submit_value(-flux_2, q);
       }
+
+      eval_minus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+      eval_plus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_inner_face_RI_diffusion_implicit(
-    const MatrixFree<dim, Number>                     &data,
-    LinearAlgebra::distributed::Vector<Number>        &dst,
-    const LinearAlgebra::distributed::Vector<Number>  &src,
-    const std::pair<unsigned int, unsigned int>       &face_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &face_range) const
   {
     FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_minus(data, true);
     FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_plus(data, false);
 
     for (unsigned int face = face_range.first; face < face_range.second; face++)
+    {
+      eval_minus.reinit(face);
+      eval_plus.reinit(face);
+
+      eval_minus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
+      eval_plus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
+
+      const auto sigmaF = std::max(eval_minus.read_cell_data(array_penalty_parameter),
+                                   eval_plus.read_cell_data(array_penalty_parameter));
+
+      for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
       {
-        eval_minus.reinit(face);
-        eval_plus.reinit(face);
+        // 1st face integral
+        // consider time step size dt_RI for implicit scheme
+        const auto u_minus = eval_minus.get_value(q);
+        const auto u_plus = eval_plus.get_value(q);
+        const auto flux_1 = 0.5 * (u_minus - u_plus) * viscosity * dt_RI;
 
-        eval_minus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
-        eval_plus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
+        eval_minus.submit_normal_derivative(-flux_1, q);
+        eval_plus.submit_normal_derivative(-flux_1, q);
 
-        const auto sigmaF = std::max(eval_minus.read_cell_data(array_penalty_parameter),
-                            eval_plus.read_cell_data(array_penalty_parameter));
+        // 2nd and 3rd (=penalty) face integral
+        // consider time step size dt_RI for implicit scheme
+        const auto u_minus_normal_grad = eval_minus.get_normal_derivative(q);
+        const auto u_plus_normal_grad = eval_plus.get_normal_derivative(q);
 
-        for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
-          {
-            // 1st face integral
-            // consider time step size dt_RI for implicit scheme
-            const auto u_minus = eval_minus.get_value(q);
-            const auto u_plus  = eval_plus.get_value(q);
-            const auto flux_1  = 0.5 * (u_minus - u_plus) * viscosity * dt_RI;
+        const auto flux_2 = 0.5 * (u_minus_normal_grad + u_plus_normal_grad) * viscosity * dt_RI - (u_minus - u_plus) * viscosity * sigmaF * dt_RI;
 
-            eval_minus.submit_normal_derivative(-flux_1, q);
-            eval_plus.submit_normal_derivative(-flux_1, q);
-
-            // 2nd and 3rd (=penalty) face integral 
-            // consider time step size dt_RI for implicit scheme
-            const auto u_minus_normal_grad = eval_minus.get_normal_derivative(q);
-            const auto u_plus_normal_grad  = eval_plus.get_normal_derivative(q);
-
-            const auto flux_2 = 0.5 * (u_minus_normal_grad + u_plus_normal_grad) * viscosity * dt_RI
-                                -(u_minus - u_plus) * viscosity * sigmaF * dt_RI;
-
-            eval_minus.submit_value(-flux_2, q);
-            eval_plus.submit_value(flux_2, q);
-          }
-
-        eval_minus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
-        eval_plus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+        eval_minus.submit_value(-flux_2, q);
+        eval_plus.submit_value(flux_2, q);
       }
+
+      eval_minus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+      eval_plus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_boundary_face(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &face_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &face_range) const
   {
     FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_minus(data, true);
     FEFaceEvaluation<dim, fe_degree, fe_degree + 1, dim, Number> eval_vel(data, true, 2);
 
     for (unsigned int face = face_range.first; face < face_range.second; face++)
+    {
+      eval_minus.reinit(face);
+      eval_minus.gather_evaluate(src, EvaluationFlags::values);
+      eval_vel.reinit(face);
+      eval_vel.gather_evaluate(velocity_operator, EvaluationFlags::values);
+
+      for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
       {
-        eval_minus.reinit(face);
-        eval_minus.gather_evaluate(src, EvaluationFlags::values);
-        eval_vel.reinit(face);
-        eval_vel.gather_evaluate(velocity_operator, EvaluationFlags::values);
+        const auto speed = eval_vel.get_value(q);
 
-        for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
-          {
-            const auto speed = eval_vel.get_value(q);
+        // Dirichlet boundary
+        const auto u_minus = eval_minus.get_value(q);
+        const auto normal_vector = eval_minus.get_normal_vector(q);
 
-            // Dirichlet boundary
-            const auto u_minus       = eval_minus.get_value(q);
-            const auto normal_vector = eval_minus.get_normal_vector(q);
+        // Fix solution value outside of the reinitialization region
+        const auto u_plus = RI_distance * 1.2;
 
-            // Fix solution value outside of the reinitialization region
-            const auto u_plus =  RI_distance * 1.2;
+        // Compute the flux
+        const auto normal_times_speed = normal_vector * speed;
+        const auto flux_times_normal = 0.5 * ((u_minus + u_plus) * normal_times_speed +
+                                              std::abs(normal_times_speed) * (u_minus - u_plus));
 
-            // Compute the flux
-            const auto normal_times_speed = normal_vector * speed;
-            const auto flux_times_normal = 0.5 * ((u_minus + u_plus) * normal_times_speed +
-                                           std::abs(normal_times_speed) * (u_minus - u_plus));
-
-            eval_minus.submit_value(-flux_times_normal, q);
-          }
-
-        eval_minus.integrate_scatter(EvaluationFlags::values, dst);
+        eval_minus.submit_value(-flux_times_normal, q);
       }
+
+      eval_minus.integrate_scatter(EvaluationFlags::values, dst);
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   template <bool is_right, uint component>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_boundary_face_RI_grad(
-    const MatrixFree<dim, Number>                     &data,
-    LinearAlgebra::distributed::Vector<Number>        &dst,
-    const LinearAlgebra::distributed::Vector<Number>  &src,
-    const std::pair<unsigned int, unsigned int>       &face_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &face_range) const
   {
     FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_minus(data, true);
 
-      if (is_right)
+    if (is_right)
+    {
+      for (unsigned int face = face_range.first; face < face_range.second; face++)
       {
-        for (unsigned int face = face_range.first; face < face_range.second; face++)
-          {
-            eval_minus.reinit(face);
-            eval_minus.gather_evaluate(src, EvaluationFlags::values);
+        eval_minus.reinit(face);
+        eval_minus.gather_evaluate(src, EvaluationFlags::values);
 
-            for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
-              {
-                // Dirichlet boundary
-                const auto u_minus             = eval_minus.get_value(q);
-                const auto normal_vector_minus = eval_minus.get_normal_vector(q);
+        for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
+        {
+          // Dirichlet boundary
+          const auto u_minus = eval_minus.get_value(q);
+          const auto normal_vector_minus = eval_minus.get_normal_vector(q);
 
-                // Compute the outer solution value
-                const auto u_plus  =  RI_distance * 1.2;
+          // Compute the outer solution value
+          const auto u_plus = RI_distance * 1.2;
 
-                // Compute the flux
-                const auto flux = compare_and_apply_mask<SIMDComparison::greater_than_or_equal>(
-                                      normal_vector_minus[component],
-                                      0.,
-                                      normal_vector_minus[component] * u_plus,
-                                      normal_vector_minus[component] * u_minus);
+          // Compute the flux
+          const auto flux = compare_and_apply_mask<SIMDComparison::greater_than_or_equal>(
+              normal_vector_minus[component],
+              0.,
+              normal_vector_minus[component] * u_plus,
+              normal_vector_minus[component] * u_minus);
 
-                eval_minus.submit_value(flux, q);
-              }
+          eval_minus.submit_value(flux, q);
+        }
 
-            eval_minus.integrate_scatter(EvaluationFlags::values, dst);
-          }
+        eval_minus.integrate_scatter(EvaluationFlags::values, dst);
       }
-      else
+    }
+    else
+    {
+      for (unsigned int face = face_range.first; face < face_range.second; face++)
       {
-        for (unsigned int face = face_range.first; face < face_range.second; face++)
-          {
-            eval_minus.reinit(face);
-            eval_minus.gather_evaluate(src, EvaluationFlags::values);
+        eval_minus.reinit(face);
+        eval_minus.gather_evaluate(src, EvaluationFlags::values);
 
-            for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
-              {
-                // Dirichlet boundary
-                const auto u_minus       = eval_minus.get_value(q);
-                const auto normal_vector_minus = eval_minus.get_normal_vector(q);
+        for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
+        {
+          // Dirichlet boundary
+          const auto u_minus = eval_minus.get_value(q);
+          const auto normal_vector_minus = eval_minus.get_normal_vector(q);
 
-                // Compute the outer solution value
-                const auto u_plus  = RI_distance * 1.2;
+          // Compute the outer solution value
+          const auto u_plus = RI_distance * 1.2;
 
-                // Compute the flux
-                const auto flux = compare_and_apply_mask<SIMDComparison::greater_than_or_equal>(
-                                      normal_vector_minus[component],
-                                      0.,
-                                      normal_vector_minus[component] * u_minus,
-                                      normal_vector_minus[component] * u_plus);
+          // Compute the flux
+          const auto flux = compare_and_apply_mask<SIMDComparison::greater_than_or_equal>(
+              normal_vector_minus[component],
+              0.,
+              normal_vector_minus[component] * u_minus,
+              normal_vector_minus[component] * u_plus);
 
-                eval_minus.submit_value(flux, q);
-              }
+          eval_minus.submit_value(flux, q);
+        }
 
-            eval_minus.integrate_scatter(EvaluationFlags::values, dst);
-          }
+        eval_minus.integrate_scatter(EvaluationFlags::values, dst);
       }
+    }
   }
-  
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::local_apply_boundary_face_RI_diffusion(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &face_range) const
-  {
-    FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_minus(data, true);
-
-      for (unsigned int face = face_range.first; face < face_range.second; face++)
-        {
-          eval_minus.reinit(face);
-          eval_minus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
-
-          const auto sigmaF = eval_minus.read_cell_data(array_penalty_parameter);
-
-          for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
-            {
-              // 1st face integral
-              const auto u_minus = eval_minus.get_value(q);
-
-              // Compute the outer solution value
-              const auto u_plus  = RI_distance * 1.2;
-
-              const auto flux_1  = 0.5 * (u_minus - u_plus) * viscosity;
-
-              eval_minus.submit_normal_derivative(flux_1, q);
-
-              // 2nd and 3rd (=penalty) face integral
-              const auto u_minus_normal_grad = eval_minus.get_normal_derivative(q);
-
-              // Assume same gradients.
-              const auto u_plus_normal_grad  = - u_minus_normal_grad;
-
-              const auto flux_2 = 0.5 * (u_minus_normal_grad + u_plus_normal_grad) * viscosity
-                                  - (u_minus - u_plus) * viscosity * sigmaF;
-
-              eval_minus.submit_value(flux_2, q);
-            }
-
-          eval_minus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
-        }
-  }
-
-
-
-  template <int dim, int fe_degree>
-  void
-  LevelSetOperation<dim, fe_degree>::local_apply_boundary_face_RI_diffusion_implicit(
-    const MatrixFree<dim, Number>                       &data,
-    LinearAlgebra::distributed::Vector<Number>          &dst,
-    const LinearAlgebra::distributed::Vector<Number>    &src,
-    const std::pair<unsigned int, unsigned int>         &face_range) const
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &face_range) const
   {
     FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_minus(data, true);
 
     for (unsigned int face = face_range.first; face < face_range.second; face++)
+    {
+      eval_minus.reinit(face);
+      eval_minus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
+
+      const auto sigmaF = eval_minus.read_cell_data(array_penalty_parameter);
+
+      for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
       {
-        eval_minus.reinit(face);
-        eval_minus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
+        // 1st face integral
+        const auto u_minus = eval_minus.get_value(q);
 
-        const auto sigmaF = eval_minus.read_cell_data(array_penalty_parameter);
+        // Compute the outer solution value
+        const auto u_plus = RI_distance * 1.2;
 
-        for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
-          {
-            // 1st face integral
-            const auto u_minus = eval_minus.get_value(q);
+        const auto flux_1 = 0.5 * (u_minus - u_plus) * viscosity;
 
-            // Boundary condition for solution value. 
-            // (Note: The CG solver has problems if a fix solution value at the boundary is used.)
-            // Consider time step size dt_RI for implicit scheme.
-            const auto u_plus = u_minus;
-            const auto flux_1 = 0.5 * (u_minus - u_plus) * viscosity * dt_RI;
+        eval_minus.submit_normal_derivative(flux_1, q);
 
-            eval_minus.submit_normal_derivative(-flux_1, q);
+        // 2nd and 3rd (=penalty) face integral
+        const auto u_minus_normal_grad = eval_minus.get_normal_derivative(q);
 
-            // 2nd and 3rd (=penalty) face integral 
-            // Consider time step size dt_RI for implicit scheme.
-            const auto u_minus_normal_grad = eval_minus.get_normal_derivative(q);
+        // Assume same gradients.
+        const auto u_plus_normal_grad = -u_minus_normal_grad;
 
-            // Assume same gradients.
-            const auto u_plus_normal_grad = - u_minus_normal_grad;
+        const auto flux_2 = 0.5 * (u_minus_normal_grad + u_plus_normal_grad) * viscosity - (u_minus - u_plus) * viscosity * sigmaF;
 
-            const auto flux_2 = 0.5 * (u_minus_normal_grad + u_plus_normal_grad) * viscosity * dt_RI
-                                - (u_minus - u_plus) * viscosity * sigmaF * dt_RI;
-
-            eval_minus.submit_value(-flux_2, q);
-          }
-
-        eval_minus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+        eval_minus.submit_value(flux_2, q);
       }
+
+      eval_minus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+    }
   }
 
+  template <int dim, int fe_degree>
+  void
+  LevelSetOperation<dim, fe_degree>::local_apply_boundary_face_RI_diffusion_implicit(
+      const MatrixFree<dim, Number> &data,
+      LinearAlgebra::distributed::Vector<Number> &dst,
+      const LinearAlgebra::distributed::Vector<Number> &src,
+      const std::pair<unsigned int, unsigned int> &face_range) const
+  {
+    FEFaceEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval_minus(data, true);
 
+    for (unsigned int face = face_range.first; face < face_range.second; face++)
+    {
+      eval_minus.reinit(face);
+      eval_minus.gather_evaluate(src, EvaluationFlags::values | EvaluationFlags::gradients);
+
+      const auto sigmaF = eval_minus.read_cell_data(array_penalty_parameter);
+
+      for (unsigned int q = 0; q < eval_minus.n_q_points; ++q)
+      {
+        // 1st face integral
+        const auto u_minus = eval_minus.get_value(q);
+
+        // Boundary condition for solution value.
+        // (Note: The CG solver has problems if a fix solution value at the boundary is used.)
+        // Consider time step size dt_RI for implicit scheme.
+        const auto u_plus = u_minus;
+        const auto flux_1 = 0.5 * (u_minus - u_plus) * viscosity * dt_RI;
+
+        eval_minus.submit_normal_derivative(-flux_1, q);
+
+        // 2nd and 3rd (=penalty) face integral
+        // Consider time step size dt_RI for implicit scheme.
+        const auto u_minus_normal_grad = eval_minus.get_normal_derivative(q);
+
+        // Assume same gradients.
+        const auto u_plus_normal_grad = -u_minus_normal_grad;
+
+        const auto flux_2 = 0.5 * (u_minus_normal_grad + u_plus_normal_grad) * viscosity * dt_RI - (u_minus - u_plus) * viscosity * sigmaF * dt_RI;
+
+        eval_minus.submit_value(-flux_2, q);
+      }
+
+      eval_minus.integrate_scatter(EvaluationFlags::values | EvaluationFlags::gradients, dst);
+    }
+  }
 
   template <int dim, int fe_degree>
   void
@@ -1460,84 +1423,81 @@ case 9:
     const unsigned int n_macro_cells = this->data.n_cell_batches();
     artificial_viscosity.resize(n_macro_cells);
 
-    const Number s_0   = param.art_diff_k * (-4. * std::log10(fe_degree));
-    const auto & smoothness_indicator = indicator.get_smoothness_indicator();
+    const Number s_0 = param.art_diff_k * (-4. * std::log10(fe_degree));
+    const auto &smoothness_indicator = indicator.get_smoothness_indicator();
 
     Number epsilon_0, sm_ind, distance;
 
     for (uint macro_cells = 0; macro_cells < n_macro_cells; ++macro_cells)
+    {
+      // Depending on the cell number, there might be empty lanes
+      const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(macro_cells);
+
+      // Element-wise calculation of the required artificial viscosity according to Persson and Peraire (2006)
+      for (uint lane = 0; lane < n_lanes_filled; ++lane)
       {
-        // Depending on the cell number, there might be empty lanes
-        const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(macro_cells);
+        auto cell = this->data.get_cell_iterator(macro_cells, lane);
 
-        // Element-wise calculation of the required artificial viscosity according to Persson and Peraire (2006)
-        for (uint lane = 0; lane < n_lanes_filled; ++lane)
-          {
-            auto cell = this->data.get_cell_iterator(macro_cells, lane);
+        sm_ind = smoothness_indicator[macro_cells][lane];
 
-            sm_ind = smoothness_indicator[macro_cells][lane];
+        if (sm_ind < (s_0 - param.art_diff_kappa))
+          artificial_viscosity[macro_cells][lane] = 0.;
+        else if (sm_ind <= (s_0 + param.art_diff_kappa))
+        {
+          distance = cell->minimum_vertex_distance();
+          epsilon_0 = param.factor_diffusivity * distance / fe_degree;
 
-            if (sm_ind < (s_0 - param.art_diff_kappa))
-              artificial_viscosity[macro_cells][lane] = 0.;
-            else if (sm_ind <= (s_0 + param.art_diff_kappa))
-              {
-                distance  = cell->minimum_vertex_distance();
-                epsilon_0 = param.factor_diffusivity * distance / fe_degree;
-
-                artificial_viscosity[macro_cells][lane] =
-                  (.5 * epsilon_0) *
-                  (1. + std::sin(numbers::PI * (sm_ind - s_0) / (2. * param.art_diff_kappa)));
-              }
-            else
-              {
-                distance  = cell->minimum_vertex_distance();
-                epsilon_0 = param.factor_diffusivity * distance / fe_degree;
-                artificial_viscosity[macro_cells][lane] = epsilon_0;
-              }
-          }
+          artificial_viscosity[macro_cells][lane] =
+              (.5 * epsilon_0) *
+              (1. + std::sin(numbers::PI * (sm_ind - s_0) / (2. * param.art_diff_kappa)));
+        }
+        else
+        {
+          distance = cell->minimum_vertex_distance();
+          epsilon_0 = param.factor_diffusivity * distance / fe_degree;
+          artificial_viscosity[macro_cells][lane] = epsilon_0;
+        }
       }
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   void
-  LevelSetOperation<dim, fe_degree>::create_rhs(LinearAlgebra::distributed::Vector<Number>        &dst,
-                                                const LinearAlgebra::distributed::Vector<Number>  &src) const
-    {
-      FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval(this->data);
+  LevelSetOperation<dim, fe_degree>::create_rhs(LinearAlgebra::distributed::Vector<Number> &dst,
+                                                const LinearAlgebra::distributed::Vector<Number> &src) const
+  {
+    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> eval(this->data);
 
-      this->data.template cell_loop<LinearAlgebra::distributed::Vector<Number>,
-                                    LinearAlgebra::distributed::Vector<Number>>(
-        [&](const auto &, auto &dst, const auto &src, auto &range) {
+    this->data.template cell_loop<LinearAlgebra::distributed::Vector<Number>,
+                                  LinearAlgebra::distributed::Vector<Number>>(
+        [&](const auto &, auto &dst, const auto &src, auto &range)
+        {
           for (auto cell = range.first; cell < range.second; ++cell)
-            {
-              eval.reinit(cell);                
-              eval.gather_evaluate(src, EvaluationFlags::values);
+          {
+            eval.reinit(cell);
+            eval.gather_evaluate(src, EvaluationFlags::values);
 
-              for (unsigned int q = 0; q < eval.static_n_q_points; ++q)
-                eval.submit_value(eval.get_value(q), q);
+            for (unsigned int q = 0; q < eval.static_n_q_points; ++q)
+              eval.submit_value(eval.get_value(q), q);
 
-              eval.integrate_scatter(EvaluationFlags::values, dst);
-            }
+            eval.integrate_scatter(EvaluationFlags::values, dst);
+          }
         },
         dst,
         src,
         true);
-    }
-
-
+  }
 
   template <int dim, int fe_degree>
   void
-  LevelSetOperation<dim, fe_degree>::reinit(const DoFHandler<dim>   &dof_handler,
-                                            const DoFHandler<dim>   &dof_handler_legendre,
-                                            const DoFHandler<dim>   &dof_handler_vel)
+  LevelSetOperation<dim, fe_degree>::reinit(const DoFHandler<dim> &dof_handler,
+                                            const DoFHandler<dim> &dof_handler_legendre,
+                                            const DoFHandler<dim> &dof_handler_vel)
   {
     std::vector<const DoFHandler<dim> *> dof_handlers(
         {&dof_handler, &dof_handler_legendre, &dof_handler_vel});
     MappingQGeneric<dim> mapping(fe_degree);
-    Quadrature<1> quadrature      = QGauss<1>(fe_degree + 1);
+    Quadrature<1> quadrature = QGauss<1>(fe_degree + 1);
     Quadrature<1> quadrature_mass = QGauss<1>(fe_degree + 1);
     // QGauss<1>(fe_degree + 1) gives inaccurate results for the norm computation.
     // Use overintegration or GaussLobatto quadrature for norm computation.
@@ -1545,18 +1505,20 @@ case 9:
     typename MatrixFree<dim, Number>::AdditionalData additional_data;
     additional_data.overlap_communication_computation = false;
     additional_data.mapping_update_flags =
-      (update_gradients | update_JxW_values | update_quadrature_points |
-       update_values);
+        (update_gradients | update_JxW_values | update_quadrature_points |
+         update_values);
     additional_data.mapping_update_flags_inner_faces =
-      (update_JxW_values | update_normal_vectors | update_quadrature_points |
-       update_values);
+        (update_JxW_values | update_normal_vectors | update_quadrature_points |
+         update_values);
     additional_data.mapping_update_flags_boundary_faces =
-      (update_JxW_values | update_normal_vectors | update_quadrature_points |
-       update_values);
+        (update_JxW_values | update_normal_vectors | update_quadrature_points |
+         update_values);
 
     AffineConstraints<Number> dummy;
+
     std::vector<const AffineConstraints<Number> *> constraints({&dummy, &dummy, &dummy});
     dummy.close();
+
     data.reinit(mapping,
                 dof_handlers,
                 constraints,
@@ -1564,13 +1526,11 @@ case 9:
                 additional_data);
   }
 
-
-
   template <int dim, int fe_degree>
   template <bool is_right, uint component>
   void
-  LevelSetOperation<dim, fe_degree>::apply_RI_grad(const LinearAlgebra::distributed::Vector<Number>   &src,
-                                                   LinearAlgebra::distributed::Vector<Number>         &dst)
+  LevelSetOperation<dim, fe_degree>::apply_RI_grad(const LinearAlgebra::distributed::Vector<Number> &src,
+                                                   LinearAlgebra::distributed::Vector<Number> &dst)
   {
     data.loop(&LevelSetOperation<dim, fe_degree>::local_apply_domain_RI_grad<component>,
               &LevelSetOperation<dim, fe_degree>::local_apply_inner_face_RI_grad<is_right, component>,
@@ -1583,117 +1543,114 @@ case 9:
               MatrixFree<dim, Number>::DataAccessOnFaces::values);
 
     data.cell_loop(
-      &LevelSetOperation<dim, fe_degree>::local_apply_inverse_mass_matrix,
-      this,
-      dst,
-      dst);
+        &LevelSetOperation<dim, fe_degree>::local_apply_inverse_mass_matrix,
+        this,
+        dst,
+        dst);
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::perform_stage(
-    const Number                                        current_time,
-    const Number                                        factor_solution,
-    const Number                                        factor_ai,
-    const LinearAlgebra::distributed::Vector<Number>   &current_ri,
-    LinearAlgebra::distributed::Vector<Number>         &vec_ki,
-    LinearAlgebra::distributed::Vector<Number>         &solution,
-    LinearAlgebra::distributed::Vector<Number>         &next_ri,
-    TimerOutput                                        &computing_timer) const
+      const Number current_time,
+      const Number factor_solution,
+      const Number factor_ai,
+      const LinearAlgebra::distributed::Vector<Number> &current_ri,
+      LinearAlgebra::distributed::Vector<Number> &vec_ki,
+      LinearAlgebra::distributed::Vector<Number> &solution,
+      LinearAlgebra::distributed::Vector<Number> &next_ri,
+      TimerOutput &computing_timer) const
   {
     time = current_time;
     {
-    TimerOutput::Scope t(computing_timer, "ADVECTION: apply integrals");
+      TimerOutput::Scope t(computing_timer, "ADVECTION: apply integrals");
 
-    data.loop(&LevelSetOperation<dim, fe_degree>::local_apply_domain,
-              &LevelSetOperation<dim, fe_degree>::local_apply_inner_face,
-              &LevelSetOperation<dim, fe_degree>::local_apply_boundary_face,
-              this,
-              vec_ki,
-              current_ri,
-              true,
-              MatrixFree<dim, Number>::DataAccessOnFaces::values,
-              MatrixFree<dim, Number>::DataAccessOnFaces::values);
+      data.loop(&LevelSetOperation<dim, fe_degree>::local_apply_domain,
+                &LevelSetOperation<dim, fe_degree>::local_apply_inner_face,
+                &LevelSetOperation<dim, fe_degree>::local_apply_boundary_face,
+                this,
+                vec_ki,
+                current_ri,
+                true,
+                MatrixFree<dim, Number>::DataAccessOnFaces::values,
+                MatrixFree<dim, Number>::DataAccessOnFaces::values);
     }
 
     {
-    TimerOutput::Scope t(computing_timer, "ADVECTION: apply inverse mass matrix");
-    
-    data.cell_loop(
-      &LevelSetOperation<dim, fe_degree>::local_apply_inverse_mass_matrix,
-      this,
-      next_ri,
-      vec_ki,
-      std::function<void(const unsigned int, const unsigned int)>(),
-      [&](const unsigned int start_range, const unsigned int end_range) {
-        const Number ai = factor_ai;
-        const Number bi = factor_solution;
-        if (ai == Number())
+      TimerOutput::Scope t(computing_timer, "ADVECTION: apply inverse mass matrix");
+
+      data.cell_loop(
+          &LevelSetOperation<dim, fe_degree>::local_apply_inverse_mass_matrix,
+          this,
+          next_ri,
+          vec_ki,
+          std::function<void(const unsigned int, const unsigned int)>(),
+          [&](const unsigned int start_range, const unsigned int end_range)
           {
-            DEAL_II_OPENMP_SIMD_PRAGMA
-            for (unsigned int i = start_range; i < end_range; ++i)
+            const Number ai = factor_ai;
+            const Number bi = factor_solution;
+            if (ai == Number())
+            {
+              DEAL_II_OPENMP_SIMD_PRAGMA
+              for (unsigned int i = start_range; i < end_range; ++i)
               {
-                const Number k_i          = next_ri.local_element(i);
-                const Number sol_i        = solution.local_element(i);
+                const Number k_i = next_ri.local_element(i);
+                const Number sol_i = solution.local_element(i);
                 solution.local_element(i) = sol_i + bi * k_i;
               }
-          }
-        else
-          {
-            DEAL_II_OPENMP_SIMD_PRAGMA
-            for (unsigned int i = start_range; i < end_range; ++i)
+            }
+            else
+            {
+              DEAL_II_OPENMP_SIMD_PRAGMA
+              for (unsigned int i = start_range; i < end_range; ++i)
               {
-                const Number k_i          = next_ri.local_element(i);
-                const Number sol_i        = solution.local_element(i);
+                const Number k_i = next_ri.local_element(i);
+                const Number sol_i = solution.local_element(i);
                 solution.local_element(i) = sol_i + bi * k_i;
-                next_ri.local_element(i)  = sol_i + ai * k_i;
+                next_ri.local_element(i) = sol_i + ai * k_i;
               }
-          }
-      });
+            }
+          });
     }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::perform_stage_RI(
-    const Number                                      current_time,
-    const Number                                      factor_solution,
-    const Number                                      factor_ai,
-    LinearAlgebra::distributed::Vector<Number>       &vec_ki,
-    LinearAlgebra::distributed::Vector<Number>       &solution,
-    LinearAlgebra::distributed::Vector<Number>       &next_ri,
-    LinearAlgebra::distributed::Vector<Number>       &num_Hamiltonian,
-    TimerOutput                                      &computing_timer) const
+      const Number current_time,
+      const Number factor_solution,
+      const Number factor_ai,
+      LinearAlgebra::distributed::Vector<Number> &vec_ki,
+      LinearAlgebra::distributed::Vector<Number> &solution,
+      LinearAlgebra::distributed::Vector<Number> &next_ri,
+      LinearAlgebra::distributed::Vector<Number> &num_Hamiltonian,
+      TimerOutput &computing_timer) const
   {
     time = current_time;
     {
-    TimerOutput::Scope t(computing_timer, "RI: apply num. Hamiltonian integral");
-    
-    data.cell_loop(&LevelSetOperation<dim, fe_degree>::local_apply_domain_num_Hamiltonian,
-              this,
-              vec_ki,
-              num_Hamiltonian,
-              true);
+      TimerOutput::Scope t(computing_timer, "RI: apply num. Hamiltonian integral");
+
+      data.cell_loop(&LevelSetOperation<dim, fe_degree>::local_apply_domain_num_Hamiltonian,
+                     this,
+                     vec_ki,
+                     num_Hamiltonian,
+                     true);
     }
 
-    if(param.use_IMEX == false)
+    if (param.use_IMEX == false)
     {
       {
-      TimerOutput::Scope t(computing_timer, "RI: apply diffusion integrals");
-      
-      data.loop(&LevelSetOperation<dim, fe_degree>::local_apply_domain_RI_diffusion,
-                &LevelSetOperation<dim, fe_degree>::local_apply_inner_face_RI_diffusion,
-                &LevelSetOperation<dim, fe_degree>::local_apply_boundary_face_RI_diffusion,
-                this,
-                num_Hamiltonian,
-                solution,
-                true,
-                MatrixFree<dim, Number>::DataAccessOnFaces::values,
-                MatrixFree<dim, Number>::DataAccessOnFaces::values);
+        TimerOutput::Scope t(computing_timer, "RI: apply diffusion integrals");
+
+        data.loop(&LevelSetOperation<dim, fe_degree>::local_apply_domain_RI_diffusion,
+                  &LevelSetOperation<dim, fe_degree>::local_apply_inner_face_RI_diffusion,
+                  &LevelSetOperation<dim, fe_degree>::local_apply_boundary_face_RI_diffusion,
+                  this,
+                  num_Hamiltonian,
+                  solution,
+                  true,
+                  MatrixFree<dim, Number>::DataAccessOnFaces::values,
+                  MatrixFree<dim, Number>::DataAccessOnFaces::values);
       }
 
       // add the numerical Hamiltonian rhs and the diffusion rhs
@@ -1701,78 +1658,75 @@ case 9:
     }
 
     {
-    TimerOutput::Scope t(computing_timer, "RI: apply inverse mass matrix");
-    
-    data.cell_loop(
-      &LevelSetOperation<dim, fe_degree>::local_apply_inverse_mass_matrix,
-      this,
-      next_ri,
-      vec_ki,
-      std::function<void(const unsigned int, const unsigned int)>(),
-      [&](const unsigned int start_range, const unsigned int end_range) {
-        const Number ai = factor_ai;
-        const Number bi = factor_solution;
-        if (ai == Number())
+      TimerOutput::Scope t(computing_timer, "RI: apply inverse mass matrix");
+
+      data.cell_loop(
+          &LevelSetOperation<dim, fe_degree>::local_apply_inverse_mass_matrix,
+          this,
+          next_ri,
+          vec_ki,
+          std::function<void(const unsigned int, const unsigned int)>(),
+          [&](const unsigned int start_range, const unsigned int end_range)
           {
-            DEAL_II_OPENMP_SIMD_PRAGMA
-            for (unsigned int i = start_range; i < end_range; ++i)
+            const Number ai = factor_ai;
+            const Number bi = factor_solution;
+            if (ai == Number())
+            {
+              DEAL_II_OPENMP_SIMD_PRAGMA
+              for (unsigned int i = start_range; i < end_range; ++i)
               {
-                const Number k_i          = next_ri.local_element(i);
-                const Number sol_i        = solution.local_element(i);
+                const Number k_i = next_ri.local_element(i);
+                const Number sol_i = solution.local_element(i);
                 solution.local_element(i) = sol_i + bi * k_i;
               }
-          }
-        else
-          {
-            DEAL_II_OPENMP_SIMD_PRAGMA
-            for (unsigned int i = start_range; i < end_range; ++i)
+            }
+            else
+            {
+              DEAL_II_OPENMP_SIMD_PRAGMA
+              for (unsigned int i = start_range; i < end_range; ++i)
               {
-                const Number k_i          = next_ri.local_element(i);
-                const Number sol_i        = solution.local_element(i);
+                const Number k_i = next_ri.local_element(i);
+                const Number sol_i = solution.local_element(i);
                 solution.local_element(i) = sol_i + bi * k_i;
-                next_ri.local_element(i)  = sol_i + ai * k_i;
+                next_ri.local_element(i) = sol_i + ai * k_i;
               }
-          }
-      });
+            }
+          });
     }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::project_initial(
-    LinearAlgebra::distributed::Vector<Number> &dst) const
+      LinearAlgebra::distributed::Vector<Number> &dst) const
   {
     LevelSetFunction<dim> solution(0., param);
     FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi(data);
     MatrixFreeOperators::CellwiseInverseMassMatrix<dim, fe_degree, 1, Number>
-      inverse(phi);
+        inverse(phi);
 #if DEAL_II_VERSION_GTE(9, 3, 0)
     dst.zero_out_ghost_values();
 #else
     dst.zero_out_ghosts();
 #endif
     for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
-      {
-        phi.reinit(cell);
-        for (unsigned int q = 0; q < phi.n_q_points; ++q)
-          phi.submit_dof_value(solution.value(phi.quadrature_point(q)), q);
-        inverse.transform_from_q_points_to_basis(1,
-                                                 phi.begin_dof_values(),
-                                                 phi.begin_dof_values());
-        phi.set_dof_values(dst);
-      }
+    {
+      phi.reinit(cell);
+      for (unsigned int q = 0; q < phi.n_q_points; ++q)
+        phi.submit_dof_value(solution.value(phi.quadrature_point(q)), q);
+      inverse.transform_from_q_points_to_basis(1,
+                                               phi.begin_dof_values(),
+                                               phi.begin_dof_values());
+      phi.set_dof_values(dst);
+    }
   }
-
-
 
   // This function calculates the L2-norm of the distance (phi-phi_analytical)
   // in the interface region of a circular interface
   template <int dim, int fe_degree>
   double
   LevelSetOperation<dim, fe_degree>::compute_L2_norm_in_interface_region(double const time,
-    const LinearAlgebra::distributed::Vector<Number> &solution, const LinearAlgebra::distributed::Vector<Number> &initial_solution) const
+                                                                         const LinearAlgebra::distributed::Vector<Number> &solution, const LinearAlgebra::distributed::Vector<Number> &initial_solution) const
   {
     // Define the coordinates of the center of the circular interface for
     // the current test case
@@ -1782,153 +1736,145 @@ case 9:
     // Exact radius of interface for the current test case
     const Number r_interface = 0.15;
     // Interval from the inteface, in which the norm should be calculated
-    //const Number epsilon = 0.02;
-    const Number epsilon = RI_distance*0.5;
+    // const Number epsilon = 0.02;
+    const Number epsilon = RI_distance * 0.5;
 
-    Number  norm_difference = 0.;
-    Number  norm_analytical = 0.;
+    Number norm_difference = 0.;
+    Number norm_analytical = 0.;
 
     // Set up function for radius computation
     ComputeRadius<dim> compute_radius(0., x_center, y_center, z_center);
     // Set up function for exact solution
-    LevelSetFunction<dim>  exact_solution(time, param);
-    
-    FEEvaluation<dim, -1> phi(data,0,2);
-        FEEvaluation<dim, -1> phi_initial(data,0,2);
+    LevelSetFunction<dim> exact_solution(time, param);
 
+    FEEvaluation<dim, -1> phi(data, 0, 2);
+    FEEvaluation<dim, -1> phi_initial(data, 0, 2);
 
     for (unsigned int macro_cells = 0; macro_cells < data.n_cell_batches(); ++macro_cells)
+    {
+      phi.reinit(macro_cells);
+      phi.gather_evaluate(solution, EvaluationFlags::values);
+
+      phi_initial.reinit(macro_cells);
+      phi_initial.gather_evaluate(initial_solution, EvaluationFlags::values);
+
+      // Depending on the cell number, there might be empty lanes
+      const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(macro_cells);
+
+      for (unsigned int q = 0; q < phi.n_q_points; ++q)
       {
-        phi.reinit(macro_cells);
-        phi.gather_evaluate(solution, EvaluationFlags::values);
+        // calculate radius at the current quadrature point
+        auto r = compute_radius.value(phi.quadrature_point(q));
 
-        phi_initial.reinit(macro_cells);
-        phi_initial.gather_evaluate(initial_solution, EvaluationFlags::values);
+        // calculate deviation from solution
+        auto sol_difference = std::abs(exact_solution.value(phi.quadrature_point(q)) - phi.get_value(q));
 
-        // Depending on the cell number, there might be empty lanes
-        const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(macro_cells);
+        // auto analytical = std::abs(exact_solution.value(phi.quadrature_point(q)));
 
-        for (unsigned int q = 0; q < phi.n_q_points; ++q)
+        // auto sol_difference = std::abs(phi_initial.get_value(q)- phi.get_value(q));
+        auto analytical = std::abs(phi_initial.get_value(q));
+
+        // alternatively, use:
+        // auto sol_difference = std::abs((r-r_interface) - phi.get_value(q));
+
+        // loop over lanes of VectorizedArray
+        // check, if current position is in the defined interval around the interface level
+        for (unsigned int lane = 0; lane < n_lanes_filled; ++lane)
         {
-          // calculate radius at the current quadrature point
-          auto r = compute_radius.value(phi.quadrature_point(q));
-
-          // calculate deviation from solution
-          auto sol_difference = std::abs(exact_solution.value(phi.quadrature_point(q)) - phi.get_value(q));
-
-          //auto analytical = std::abs(exact_solution.value(phi.quadrature_point(q)));
-
-          //auto sol_difference = std::abs(phi_initial.get_value(q)- phi.get_value(q));
-          auto analytical = std::abs(phi_initial.get_value(q));
-
-          // alternatively, use:
-          // auto sol_difference = std::abs((r-r_interface) - phi.get_value(q));
-          
-          // loop over lanes of VectorizedArray
-          // check, if current position is in the defined interval around the interface level
-          for (unsigned int lane = 0; lane < n_lanes_filled; ++lane)
-          {
-           // if(phi.quadrature_point(q)[0][lane]>0.8){
-            //if (r[lane]<=(r_interface+epsilon) && r[lane]>=(r_interface-epsilon))
-            //{
-              norm_difference += sol_difference[lane] * sol_difference[lane] * phi.JxW(q)[lane];
-              norm_analytical += analytical[lane] * analytical[lane] * phi.JxW(q)[lane];
-            //}
-            
-          }
+          // if(phi.quadrature_point(q)[0][lane]>0.8){
+          // if (r[lane]<=(r_interface+epsilon) && r[lane]>=(r_interface-epsilon))
+          //{
+          norm_difference += sol_difference[lane] * sol_difference[lane] * phi.JxW(q)[lane];
+          norm_analytical += analytical[lane] * analytical[lane] * phi.JxW(q)[lane];
+          //}
         }
       }
+    }
 
     norm_difference = Utilities::MPI::sum(norm_difference, MPI_COMM_WORLD);
     norm_analytical = Utilities::MPI::sum(norm_analytical, MPI_COMM_WORLD);
 
-//return std::sqrt(norm_difference);
-    return std::sqrt(norm_difference)/std::sqrt(norm_analytical);
+    // return std::sqrt(norm_difference);
+    return std::sqrt(norm_difference) / std::sqrt(norm_analytical);
   }
-
-
 
   template <int dim, int fe_degree>
   Tensor<1, 2>
   LevelSetOperation<dim, fe_degree>::compute_mass_and_energy(
-    const LinearAlgebra::distributed::Vector<Number> &vec) const
+      const LinearAlgebra::distributed::Vector<Number> &vec) const
   {
-    Tensor<1, 2>    mass_energy = {};
+    Tensor<1, 2> mass_energy = {};
     FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi(data);
     for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+    {
+      phi.reinit(cell);
+      phi.gather_evaluate(vec, EvaluationFlags::values | EvaluationFlags::gradients);
+      VectorizedArray<Number> mass = {};
+      VectorizedArray<Number> energy = {};
+      for (unsigned int q = 0; q < phi.n_q_points; ++q)
       {
-        phi.reinit(cell);
-        phi.gather_evaluate(vec, EvaluationFlags::values | EvaluationFlags::gradients);
-        VectorizedArray<Number> mass   = {};
-        VectorizedArray<Number> energy = {};
-        for (unsigned int q = 0; q < phi.n_q_points; ++q)
-          {
-            mass += phi.get_value(q) * phi.JxW(q);
-            energy += phi.get_value(q) * phi.get_value(q) * phi.JxW(q);
-          }
-        for (unsigned int v = 0; v < data.n_active_entries_per_cell_batch(cell);
-             ++v)
-          {
-            mass_energy[0] += mass[v];
-            mass_energy[1] += energy[v];
-          }
+        mass += phi.get_value(q) * phi.JxW(q);
+        energy += phi.get_value(q) * phi.get_value(q) * phi.JxW(q);
       }
+      for (unsigned int v = 0; v < data.n_active_entries_per_cell_batch(cell);
+           ++v)
+      {
+        mass_energy[0] += mass[v];
+        mass_energy[1] += energy[v];
+      }
+    }
     return Utilities::MPI::sum(mass_energy, vec.get_mpi_communicator());
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::Godunov_Hamiltonian(
-          const LinearAlgebra::distributed::Vector<Number>  &solution,
-          LinearAlgebra::distributed::Vector<Number>        &num_Hamiltonian,
-          LinearAlgebra::distributed::Vector<Number>        &Signum_smoothed,
-          TimerOutput                                       &computing_timer)
+      const LinearAlgebra::distributed::Vector<Number> &solution,
+      LinearAlgebra::distributed::Vector<Number> &num_Hamiltonian,
+      LinearAlgebra::distributed::Vector<Number> &Signum_smoothed,
+      TimerOutput &computing_timer)
   {
     {
-    TimerOutput::Scope t(computing_timer, "RI: compute upwind and downwind gradients");
+      TimerOutput::Scope t(computing_timer, "RI: compute upwind and downwind gradients");
 
-    // The upwind and downwind gradients are already calculated for the smoothed signum function.
-    // The user has the choice if he want's to update the gradient vectors in every Runge-Kutta stage.
+      // The upwind and downwind gradients are already calculated for the smoothed signum function.
+      // The user has the choice if he want's to update the gradient vectors in every Runge-Kutta stage.
 
-    // Hint: Especially for explicit reinitialization time stepping use_const_gradient_in_RI = is useful
-    // to save computational effort. As rule of thumb, up to 10 explicit reinitialization time steps, the 
-    // accuracy is not deteriorated due to this simplification.
-    if (param.use_const_gradient_in_RI == false)
-    {
-      // x-direction
-      apply_RI_grad<false, 0>(solution, grad_x_l);
-      apply_RI_grad<true, 0>(solution, grad_x_r);
-      // y-direction
-      apply_RI_grad<false, 1>(solution, grad_y_l);
-      apply_RI_grad<true, 1>(solution, grad_y_r);
-
-      if (dim == 3)
+      // Hint: Especially for explicit reinitialization time stepping use_const_gradient_in_RI = is useful
+      // to save computational effort. As rule of thumb, up to 10 explicit reinitialization time steps, the
+      // accuracy is not deteriorated due to this simplification.
+      if (param.use_const_gradient_in_RI == false)
       {
-        // z-direction
-        apply_RI_grad<false, 2>(solution, grad_z_l);
-        apply_RI_grad<true, 2>(solution, grad_z_r);
+        // x-direction
+        apply_RI_grad<false, 0>(solution, grad_x_l);
+        apply_RI_grad<true, 0>(solution, grad_x_r);
+        // y-direction
+        apply_RI_grad<false, 1>(solution, grad_y_l);
+        apply_RI_grad<true, 1>(solution, grad_y_r);
+
+        if (dim == 3)
+        {
+          // z-direction
+          apply_RI_grad<false, 2>(solution, grad_z_l);
+          apply_RI_grad<true, 2>(solution, grad_z_r);
+        }
       }
     }
-    }
 
     {
-    TimerOutput::Scope t(computing_timer, "RI: compute Godunov num. Hamiltonian");
-    
-    // calculate the numerical Hamiltonian with Godunov's method
-    apply_Hamiltonian(num_Hamiltonian, Signum_smoothed, solution);
+      TimerOutput::Scope t(computing_timer, "RI: compute Godunov num. Hamiltonian");
+
+      // calculate the numerical Hamiltonian with Godunov's method
+      apply_Hamiltonian(num_Hamiltonian, Signum_smoothed, solution);
     }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::apply_Hamiltonian(
-          LinearAlgebra::distributed::Vector<Number>        &num_Hamiltonian,
-          const LinearAlgebra::distributed::Vector<Number>  &Signum_smoothed,
-          const LinearAlgebra::distributed::Vector<Number>  &solution) const
+      LinearAlgebra::distributed::Vector<Number> &num_Hamiltonian,
+      const LinearAlgebra::distributed::Vector<Number> &Signum_smoothed,
+      const LinearAlgebra::distributed::Vector<Number> &solution) const
   {
     const dealii::VectorizedArray<Number> zero_vector = 0;
 
@@ -1943,66 +1889,61 @@ case 9:
     if (dim == 2)
     {
       for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+      {
+        phi_grad_x_l.reinit(cell);
+        phi_grad_x_l.read_dof_values(grad_x_l);
+        phi_grad_x_r.reinit(cell);
+        phi_grad_x_r.read_dof_values(grad_x_r);
+        phi_grad_y_l.reinit(cell);
+        phi_grad_y_l.read_dof_values(grad_y_l);
+        phi_grad_y_r.reinit(cell);
+        phi_grad_y_r.read_dof_values(grad_y_r);
+        phi_sign_mod.reinit(cell);
+        phi_sign_mod.read_dof_values(Signum_smoothed);
+        phi_sol.reinit(cell);
+        phi_sol.read_dof_values(solution);
+
+        for (unsigned int q = 0; q < phi_grad_x_l.dofs_per_cell; ++q)
         {
-          phi_grad_x_l.reinit(cell);
-          phi_grad_x_l.read_dof_values(grad_x_l);
-          phi_grad_x_r.reinit(cell);
-          phi_grad_x_r.read_dof_values(grad_x_r);
-          phi_grad_y_l.reinit(cell);
-          phi_grad_y_l.read_dof_values(grad_y_l);
-          phi_grad_y_r.reinit(cell);
-          phi_grad_y_r.read_dof_values(grad_y_r);
-          phi_sign_mod.reinit(cell);
-          phi_sign_mod.read_dof_values(Signum_smoothed);
-          phi_sol.reinit(cell);
-          phi_sol.read_dof_values(solution);
+          dealii::VectorizedArray<Number> gradient_goal = 1.;
 
-          for (unsigned int q = 0; q < phi_grad_x_l.dofs_per_cell; ++q)
+          if (param.do_edge_rounding)
           {
-            dealii::VectorizedArray<Number> gradient_goal = 1.;
-
-            if (param.do_edge_rounding)
-            {
             // definition of the target gradient
-            gradient_goal = 1.* 4. / ((std::exp(6. * (1. - std::abs(phi_sol.get_dof_value(q))/RI_distance)) 
-                                      + std::exp(-6. *(1.-std::abs(phi_sol.get_dof_value(q)) / RI_distance))) 
-                                      * (std::exp(6. *(1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance)) 
-                                      + std::exp(-6.*(1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance)) ));
-              
+            gradient_goal = 1. * 4. / ((std::exp(6. * (1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance)) + std::exp(-6. * (1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance))) * (std::exp(6. * (1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance)) + std::exp(-6. * (1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance))));
+
             gradient_goal = compare_and_apply_mask<SIMDComparison::less_than>(std::abs(phi_sol.get_dof_value(q)),
                                                                               RI_distance,
                                                                               1.,
                                                                               gradient_goal);
-            }
-
-            auto u = compare_and_apply_mask<SIMDComparison::greater_than>(phi_sign_mod.get_dof_value(q),
-                                                                          0.,
-            
-            (std::sqrt(
-              
-            std::max((std::min(phi_grad_x_l.get_dof_value(q), zero_vector))*(std::min(phi_grad_x_l.get_dof_value(q), zero_vector)),
-                    (std::max(phi_grad_x_r.get_dof_value(q), zero_vector))*(std::max(phi_grad_x_r.get_dof_value(q), zero_vector)))
-
-            + std::max((std::min(phi_grad_y_l.get_dof_value(q), zero_vector))*(std::min(phi_grad_y_l.get_dof_value(q), zero_vector)),
-                    (std::max(phi_grad_y_r.get_dof_value(q), zero_vector))*(std::max(phi_grad_y_r.get_dof_value(q), zero_vector)))   
-            )    
-            - gradient_goal) * phi_sign_mod.get_dof_value(q)
-            ,
-            (std::sqrt(
-              
-            std::max((std::max(phi_grad_x_l.get_dof_value(q), zero_vector))*(std::max(phi_grad_x_l.get_dof_value(q), zero_vector)),
-                    (std::min(phi_grad_x_r.get_dof_value(q), zero_vector))*(std::min(phi_grad_x_r.get_dof_value(q), zero_vector)))
-
-            + std::max((std::max(phi_grad_y_l.get_dof_value(q), zero_vector))*(std::max(phi_grad_y_l.get_dof_value(q), zero_vector)),
-                    (std::min(phi_grad_y_r.get_dof_value(q), zero_vector))*(std::min(phi_grad_y_r.get_dof_value(q), zero_vector)))
-            )
-            - gradient_goal) * phi_sign_mod.get_dof_value(q)
-            );
-
-            phi_grad_x_l.submit_dof_value(u, q);
           }
-          phi_grad_x_l.set_dof_values(num_Hamiltonian);
+
+          auto u = compare_and_apply_mask<SIMDComparison::greater_than>(phi_sign_mod.get_dof_value(q),
+                                                                        0.,
+
+                                                                        (std::sqrt(
+
+                                                                             std::max((std::min(phi_grad_x_l.get_dof_value(q), zero_vector)) * (std::min(phi_grad_x_l.get_dof_value(q), zero_vector)),
+                                                                                      (std::max(phi_grad_x_r.get_dof_value(q), zero_vector)) * (std::max(phi_grad_x_r.get_dof_value(q), zero_vector)))
+
+                                                                             + std::max((std::min(phi_grad_y_l.get_dof_value(q), zero_vector)) * (std::min(phi_grad_y_l.get_dof_value(q), zero_vector)),
+                                                                                        (std::max(phi_grad_y_r.get_dof_value(q), zero_vector)) * (std::max(phi_grad_y_r.get_dof_value(q), zero_vector)))) -
+                                                                         gradient_goal) *
+                                                                            phi_sign_mod.get_dof_value(q),
+                                                                        (std::sqrt(
+
+                                                                             std::max((std::max(phi_grad_x_l.get_dof_value(q), zero_vector)) * (std::max(phi_grad_x_l.get_dof_value(q), zero_vector)),
+                                                                                      (std::min(phi_grad_x_r.get_dof_value(q), zero_vector)) * (std::min(phi_grad_x_r.get_dof_value(q), zero_vector)))
+
+                                                                             + std::max((std::max(phi_grad_y_l.get_dof_value(q), zero_vector)) * (std::max(phi_grad_y_l.get_dof_value(q), zero_vector)),
+                                                                                        (std::min(phi_grad_y_r.get_dof_value(q), zero_vector)) * (std::min(phi_grad_y_r.get_dof_value(q), zero_vector)))) -
+                                                                         gradient_goal) *
+                                                                            phi_sign_mod.get_dof_value(q));
+
+          phi_grad_x_l.submit_dof_value(u, q);
         }
+        phi_grad_x_l.set_dof_values(num_Hamiltonian);
+      }
     }
 
     if (dim == 3)
@@ -2011,122 +1952,115 @@ case 9:
       FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_z_r(data);
 
       for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+      {
+        phi_grad_x_l.reinit(cell);
+        phi_grad_x_l.read_dof_values(grad_x_l);
+        phi_grad_x_r.reinit(cell);
+        phi_grad_x_r.read_dof_values(grad_x_r);
+        phi_grad_y_l.reinit(cell);
+        phi_grad_y_l.read_dof_values(grad_y_l);
+        phi_grad_y_r.reinit(cell);
+        phi_grad_y_r.read_dof_values(grad_y_r);
+        phi_grad_z_l.reinit(cell);
+        phi_grad_z_l.read_dof_values(grad_z_l);
+        phi_grad_z_r.reinit(cell);
+        phi_grad_z_r.read_dof_values(grad_z_r);
+        phi_sign_mod.reinit(cell);
+        phi_sign_mod.read_dof_values(Signum_smoothed);
+        phi_sol.reinit(cell);
+        phi_sol.read_dof_values(solution);
+
+        for (unsigned int q = 0; q < phi_grad_x_l.dofs_per_cell; ++q)
         {
-          phi_grad_x_l.reinit(cell);
-          phi_grad_x_l.read_dof_values(grad_x_l);
-          phi_grad_x_r.reinit(cell);
-          phi_grad_x_r.read_dof_values(grad_x_r);
-          phi_grad_y_l.reinit(cell);
-          phi_grad_y_l.read_dof_values(grad_y_l);
-          phi_grad_y_r.reinit(cell);
-          phi_grad_y_r.read_dof_values(grad_y_r);
-          phi_grad_z_l.reinit(cell);
-          phi_grad_z_l.read_dof_values(grad_z_l);
-          phi_grad_z_r.reinit(cell);
-          phi_grad_z_r.read_dof_values(grad_z_r);
-          phi_sign_mod.reinit(cell);
-          phi_sign_mod.read_dof_values(Signum_smoothed);
-          phi_sol.reinit(cell);
-          phi_sol.read_dof_values(solution);
+          dealii::VectorizedArray<Number> gradient_goal = 1.;
 
-          for (unsigned int q = 0; q < phi_grad_x_l.dofs_per_cell; ++q)
+          if (param.do_edge_rounding)
           {
-            dealii::VectorizedArray<Number> gradient_goal = 1.;
-
-            if (param.do_edge_rounding)
-            {
             // definition of the target gradient
-            gradient_goal = 1.* 4. / ((std::exp(6. * (1. - std::abs(phi_sol.get_dof_value(q))/RI_distance)) 
-                                      + std::exp(-6. *(1.-std::abs(phi_sol.get_dof_value(q)) / RI_distance))) 
-                                      * (std::exp( 6. *(1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance)) 
-                                      + std::exp(-6.*(1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance)) ));
-              
+            gradient_goal = 1. * 4. / ((std::exp(6. * (1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance)) + std::exp(-6. * (1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance))) * (std::exp(6. * (1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance)) + std::exp(-6. * (1. - std::abs(phi_sol.get_dof_value(q)) / RI_distance))));
+
             gradient_goal = compare_and_apply_mask<SIMDComparison::less_than>(std::abs(phi_sol.get_dof_value(q)),
                                                                               RI_distance,
                                                                               1.,
                                                                               gradient_goal);
-            }
-            
-            auto u = compare_and_apply_mask<SIMDComparison::greater_than>(phi_sign_mod.get_dof_value(q),0.,
-            
-            (std::sqrt(
-              
-            std::max((std::min(phi_grad_x_l.get_dof_value(q), zero_vector))*(std::min(phi_grad_x_l.get_dof_value(q), zero_vector)),
-                    (std::max(phi_grad_x_r.get_dof_value(q), zero_vector))*(std::max(phi_grad_x_r.get_dof_value(q), zero_vector)))
-
-            + std::max((std::min(phi_grad_y_l.get_dof_value(q), zero_vector))*(std::min(phi_grad_y_l.get_dof_value(q), zero_vector)),
-                    (std::max(phi_grad_y_r.get_dof_value(q), zero_vector))*(std::max(phi_grad_y_r.get_dof_value(q), zero_vector)))
-
-            + std::max((std::min(phi_grad_z_l.get_dof_value(q), zero_vector))*(std::min(phi_grad_z_l.get_dof_value(q), zero_vector)),
-                    (std::max(phi_grad_z_r.get_dof_value(q), zero_vector))*(std::max(phi_grad_z_r.get_dof_value(q), zero_vector)))   
-            )
-            - gradient_goal) * phi_sign_mod.get_dof_value(q)
-            ,
-            (std::sqrt(
-              
-            std::max((std::max(phi_grad_x_l.get_dof_value(q), zero_vector))*(std::max(phi_grad_x_l.get_dof_value(q), zero_vector)),
-                    (std::min(phi_grad_x_r.get_dof_value(q), zero_vector))*(std::min(phi_grad_x_r.get_dof_value(q), zero_vector)))
-
-            + std::max((std::max(phi_grad_y_l.get_dof_value(q), zero_vector))*(std::max(phi_grad_y_l.get_dof_value(q), zero_vector)),
-                    (std::min(phi_grad_y_r.get_dof_value(q), zero_vector))*(std::min(phi_grad_y_r.get_dof_value(q), zero_vector)))
-
-            + std::max((std::max(phi_grad_z_l.get_dof_value(q), zero_vector))*(std::max(phi_grad_z_l.get_dof_value(q), zero_vector)),
-                    (std::min(phi_grad_z_r.get_dof_value(q), zero_vector))*(std::min(phi_grad_z_r.get_dof_value(q), zero_vector)))  
-            )
-            - gradient_goal) * phi_sign_mod.get_dof_value(q)
-            );
-
-            phi_grad_x_l.submit_dof_value(u, q);
           }
 
-          phi_grad_x_l.set_dof_values(num_Hamiltonian);
+          auto u = compare_and_apply_mask<SIMDComparison::greater_than>(phi_sign_mod.get_dof_value(q), 0.,
+
+                                                                        (std::sqrt(
+
+                                                                             std::max((std::min(phi_grad_x_l.get_dof_value(q), zero_vector)) * (std::min(phi_grad_x_l.get_dof_value(q), zero_vector)),
+                                                                                      (std::max(phi_grad_x_r.get_dof_value(q), zero_vector)) * (std::max(phi_grad_x_r.get_dof_value(q), zero_vector)))
+
+                                                                             + std::max((std::min(phi_grad_y_l.get_dof_value(q), zero_vector)) * (std::min(phi_grad_y_l.get_dof_value(q), zero_vector)),
+                                                                                        (std::max(phi_grad_y_r.get_dof_value(q), zero_vector)) * (std::max(phi_grad_y_r.get_dof_value(q), zero_vector)))
+
+                                                                             + std::max((std::min(phi_grad_z_l.get_dof_value(q), zero_vector)) * (std::min(phi_grad_z_l.get_dof_value(q), zero_vector)),
+                                                                                        (std::max(phi_grad_z_r.get_dof_value(q), zero_vector)) * (std::max(phi_grad_z_r.get_dof_value(q), zero_vector)))) -
+                                                                         gradient_goal) *
+                                                                            phi_sign_mod.get_dof_value(q),
+                                                                        (std::sqrt(
+
+                                                                             std::max((std::max(phi_grad_x_l.get_dof_value(q), zero_vector)) * (std::max(phi_grad_x_l.get_dof_value(q), zero_vector)),
+                                                                                      (std::min(phi_grad_x_r.get_dof_value(q), zero_vector)) * (std::min(phi_grad_x_r.get_dof_value(q), zero_vector)))
+
+                                                                             + std::max((std::max(phi_grad_y_l.get_dof_value(q), zero_vector)) * (std::max(phi_grad_y_l.get_dof_value(q), zero_vector)),
+                                                                                        (std::min(phi_grad_y_r.get_dof_value(q), zero_vector)) * (std::min(phi_grad_y_r.get_dof_value(q), zero_vector)))
+
+                                                                             + std::max((std::max(phi_grad_z_l.get_dof_value(q), zero_vector)) * (std::max(phi_grad_z_l.get_dof_value(q), zero_vector)),
+                                                                                        (std::min(phi_grad_z_r.get_dof_value(q), zero_vector)) * (std::min(phi_grad_z_r.get_dof_value(q), zero_vector)))) -
+                                                                         gradient_goal) *
+                                                                            phi_sign_mod.get_dof_value(q));
+
+          phi_grad_x_l.submit_dof_value(u, q);
         }
+
+        phi_grad_x_l.set_dof_values(num_Hamiltonian);
+      }
     }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::Godunov_gradient(
-          const LinearAlgebra::distributed::Vector<Number>  &solution,
-          LinearAlgebra::distributed::Vector<Number>        &God_grad,
-          TimerOutput                                       &computing_timer)
+      const LinearAlgebra::distributed::Vector<Number> &solution,
+      LinearAlgebra::distributed::Vector<Number> &God_grad,
+      TimerOutput &computing_timer)
   {
     {
-    TimerOutput::Scope t(computing_timer, "RI: compute upwind and downwind gradients");
+      TimerOutput::Scope t(computing_timer, "RI: compute upwind and downwind gradients");
 
-    //compute local upwind and downwind gradients
-    // x-direction
-    apply_RI_grad<false, 0>(solution, grad_x_l);
-    apply_RI_grad<true, 0>(solution, grad_x_r);
-    // y-direction
-    apply_RI_grad<false, 1>(solution, grad_y_l);
-    apply_RI_grad<true, 1>(solution, grad_y_r);
+      // compute local upwind and downwind gradients
+      //  x-direction
+      apply_RI_grad<false, 0>(solution, grad_x_l);
+      apply_RI_grad<true, 0>(solution, grad_x_r);
+      // y-direction
+      apply_RI_grad<false, 1>(solution, grad_y_l);
+      apply_RI_grad<true, 1>(solution, grad_y_r);
 
-    if (dim == 3)
-    {
-      // z-direction
-      apply_RI_grad<false, 2>(solution, grad_z_l);
-      apply_RI_grad<true, 2>(solution, grad_z_r);
+      if (dim == 3)
+      {
+        // z-direction
+        apply_RI_grad<false, 2>(solution, grad_z_l);
+        apply_RI_grad<true, 2>(solution, grad_z_r);
+      }
     }
-    }
 
     {
-    TimerOutput::Scope t(computing_timer, "RI: compute Godunov gradient");
-    
-    const dealii::VectorizedArray<Number> zero_vector = 0;
-    
-    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_x_l(data);
-    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_x_r(data);
-    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_y_l(data);
-    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_y_r(data);
+      TimerOutput::Scope t(computing_timer, "RI: compute Godunov gradient");
 
-    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_sol(data);
+      const dealii::VectorizedArray<Number> zero_vector = 0;
 
-    if (dim == 2)
-    {
-      for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+      FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_x_l(data);
+      FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_x_r(data);
+      FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_y_l(data);
+      FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_y_r(data);
+
+      FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_sol(data);
+
+      if (dim == 2)
+      {
+        for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
         {
           phi_grad_x_l.reinit(cell);
           phi_grad_x_l.read_dof_values(grad_x_l);
@@ -2141,40 +2075,36 @@ case 9:
 
           for (unsigned int q = 0; q < phi_grad_x_l.dofs_per_cell; ++q)
           {
-          auto u = compare_and_apply_mask<SIMDComparison::greater_than>(phi_sol.get_dof_value(q),
-                                                                        0.,
-          
-          std::sqrt(
-            
-          std::max((std::min(phi_grad_x_l.get_dof_value(q), zero_vector))*(std::min(phi_grad_x_l.get_dof_value(q), zero_vector)),
-                  (std::max(phi_grad_x_r.get_dof_value(q), zero_vector))*(std::max(phi_grad_x_r.get_dof_value(q), zero_vector)))
+            auto u = compare_and_apply_mask<SIMDComparison::greater_than>(phi_sol.get_dof_value(q),
+                                                                          0.,
 
-          + std::max((std::min(phi_grad_y_l.get_dof_value(q), zero_vector))*(std::min(phi_grad_y_l.get_dof_value(q), zero_vector)),
-                  (std::max(phi_grad_y_r.get_dof_value(q), zero_vector))*(std::max(phi_grad_y_r.get_dof_value(q), zero_vector)))     
-          )
-          ,
-          std::sqrt(
-            
-          std::max((std::max(phi_grad_x_l.get_dof_value(q), zero_vector))*(std::max(phi_grad_x_l.get_dof_value(q), zero_vector)),
-                  (std::min(phi_grad_x_r.get_dof_value(q), zero_vector))*(std::min(phi_grad_x_r.get_dof_value(q), zero_vector)))
+                                                                          std::sqrt(
 
-          + std::max((std::max(phi_grad_y_l.get_dof_value(q), zero_vector))*(std::max(phi_grad_y_l.get_dof_value(q), zero_vector)),
-                  (std::min(phi_grad_y_r.get_dof_value(q), zero_vector))*(std::min(phi_grad_y_r.get_dof_value(q), zero_vector)))     
-          )
-          );
-          phi_grad_x_l.submit_dof_value(u, q);
+                                                                              std::max((std::min(phi_grad_x_l.get_dof_value(q), zero_vector)) * (std::min(phi_grad_x_l.get_dof_value(q), zero_vector)),
+                                                                                       (std::max(phi_grad_x_r.get_dof_value(q), zero_vector)) * (std::max(phi_grad_x_r.get_dof_value(q), zero_vector)))
+
+                                                                              + std::max((std::min(phi_grad_y_l.get_dof_value(q), zero_vector)) * (std::min(phi_grad_y_l.get_dof_value(q), zero_vector)),
+                                                                                         (std::max(phi_grad_y_r.get_dof_value(q), zero_vector)) * (std::max(phi_grad_y_r.get_dof_value(q), zero_vector)))),
+                                                                          std::sqrt(
+
+                                                                              std::max((std::max(phi_grad_x_l.get_dof_value(q), zero_vector)) * (std::max(phi_grad_x_l.get_dof_value(q), zero_vector)),
+                                                                                       (std::min(phi_grad_x_r.get_dof_value(q), zero_vector)) * (std::min(phi_grad_x_r.get_dof_value(q), zero_vector)))
+
+                                                                              + std::max((std::max(phi_grad_y_l.get_dof_value(q), zero_vector)) * (std::max(phi_grad_y_l.get_dof_value(q), zero_vector)),
+                                                                                         (std::min(phi_grad_y_r.get_dof_value(q), zero_vector)) * (std::min(phi_grad_y_r.get_dof_value(q), zero_vector)))));
+            phi_grad_x_l.submit_dof_value(u, q);
           }
 
           phi_grad_x_l.set_dof_values(God_grad);
         }
-    }
+      }
 
-    if (dim == 3)
-    {
-      FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_z_l(data);
-      FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_z_r(data);
+      if (dim == 3)
+      {
+        FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_z_l(data);
+        FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi_grad_z_r(data);
 
-      for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+        for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
         {
           phi_grad_x_l.reinit(cell);
           phi_grad_x_l.read_dof_values(grad_x_l);
@@ -2193,63 +2123,57 @@ case 9:
 
           for (unsigned int q = 0; q < phi_grad_x_l.dofs_per_cell; ++q)
           {
-          auto u = compare_and_apply_mask<SIMDComparison::greater_than>(phi_sol.get_dof_value(q),
-                                                                        0.,
-          
-          std::sqrt(
-            
-          std::max((std::min(phi_grad_x_l.get_dof_value(q), zero_vector))*(std::min(phi_grad_x_l.get_dof_value(q), zero_vector)),
-                  (std::max(phi_grad_x_r.get_dof_value(q), zero_vector))*(std::max(phi_grad_x_r.get_dof_value(q), zero_vector)))
+            auto u = compare_and_apply_mask<SIMDComparison::greater_than>(phi_sol.get_dof_value(q),
+                                                                          0.,
 
-          + std::max((std::min(phi_grad_y_l.get_dof_value(q), zero_vector))*(std::min(phi_grad_y_l.get_dof_value(q), zero_vector)),
-                  (std::max(phi_grad_y_r.get_dof_value(q), zero_vector))*(std::max(phi_grad_y_r.get_dof_value(q), zero_vector)))
+                                                                          std::sqrt(
 
-          + std::max((std::min(phi_grad_z_l.get_dof_value(q), zero_vector))*(std::min(phi_grad_z_l.get_dof_value(q), zero_vector)),
-                  (std::max(phi_grad_z_r.get_dof_value(q), zero_vector))*(std::max(phi_grad_z_r.get_dof_value(q), zero_vector)))      
-          )
-          ,
-          std::sqrt(
-            
-          std::max((std::max(phi_grad_x_l.get_dof_value(q), zero_vector))*(std::max(phi_grad_x_l.get_dof_value(q), zero_vector)),
-                  (std::min(phi_grad_x_r.get_dof_value(q), zero_vector))*(std::min(phi_grad_x_r.get_dof_value(q), zero_vector)))
+                                                                              std::max((std::min(phi_grad_x_l.get_dof_value(q), zero_vector)) * (std::min(phi_grad_x_l.get_dof_value(q), zero_vector)),
+                                                                                       (std::max(phi_grad_x_r.get_dof_value(q), zero_vector)) * (std::max(phi_grad_x_r.get_dof_value(q), zero_vector)))
 
-          + std::max((std::max(phi_grad_y_l.get_dof_value(q), zero_vector))*(std::max(phi_grad_y_l.get_dof_value(q), zero_vector)),
-                  (std::min(phi_grad_y_r.get_dof_value(q), zero_vector))*(std::min(phi_grad_y_r.get_dof_value(q), zero_vector)))
+                                                                              + std::max((std::min(phi_grad_y_l.get_dof_value(q), zero_vector)) * (std::min(phi_grad_y_l.get_dof_value(q), zero_vector)),
+                                                                                         (std::max(phi_grad_y_r.get_dof_value(q), zero_vector)) * (std::max(phi_grad_y_r.get_dof_value(q), zero_vector)))
 
-          + std::max((std::max(phi_grad_z_l.get_dof_value(q), zero_vector))*(std::max(phi_grad_z_l.get_dof_value(q), zero_vector)),
-                  (std::min(phi_grad_z_r.get_dof_value(q), zero_vector))*(std::min(phi_grad_z_r.get_dof_value(q), zero_vector))) 
-          )
-          );
-          phi_grad_x_l.submit_dof_value(u, q);
+                                                                              + std::max((std::min(phi_grad_z_l.get_dof_value(q), zero_vector)) * (std::min(phi_grad_z_l.get_dof_value(q), zero_vector)),
+                                                                                         (std::max(phi_grad_z_r.get_dof_value(q), zero_vector)) * (std::max(phi_grad_z_r.get_dof_value(q), zero_vector)))),
+                                                                          std::sqrt(
+
+                                                                              std::max((std::max(phi_grad_x_l.get_dof_value(q), zero_vector)) * (std::max(phi_grad_x_l.get_dof_value(q), zero_vector)),
+                                                                                       (std::min(phi_grad_x_r.get_dof_value(q), zero_vector)) * (std::min(phi_grad_x_r.get_dof_value(q), zero_vector)))
+
+                                                                              + std::max((std::max(phi_grad_y_l.get_dof_value(q), zero_vector)) * (std::max(phi_grad_y_l.get_dof_value(q), zero_vector)),
+                                                                                         (std::min(phi_grad_y_r.get_dof_value(q), zero_vector)) * (std::min(phi_grad_y_r.get_dof_value(q), zero_vector)))
+
+                                                                              + std::max((std::max(phi_grad_z_l.get_dof_value(q), zero_vector)) * (std::max(phi_grad_z_l.get_dof_value(q), zero_vector)),
+                                                                                         (std::min(phi_grad_z_r.get_dof_value(q), zero_vector)) * (std::min(phi_grad_z_r.get_dof_value(q), zero_vector)))));
+            phi_grad_x_l.submit_dof_value(u, q);
           }
-          
+
           phi_grad_x_l.set_dof_values(God_grad);
         }
-    }
+      }
     }
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::Smoothed_signum(
-          const LinearAlgebra::distributed::Vector<Number>  &solution,
-          LinearAlgebra::distributed::Vector<Number>        &Signum_smoothed,
-          LinearAlgebra::distributed::Vector<Number>        &God_grad,
-          TimerOutput                                       &computing_timer,
-          const uint                                         max_vertex_distance) const
+      const LinearAlgebra::distributed::Vector<Number> &solution,
+      LinearAlgebra::distributed::Vector<Number> &Signum_smoothed,
+      LinearAlgebra::distributed::Vector<Number> &God_grad,
+      TimerOutput &computing_timer,
+      const uint max_vertex_distance) const
   {
     {
-    TimerOutput::Scope t(computing_timer, "RI: compute smoothed Signum function");
-  
-    // Use maximum element size for the calculation of the argument of tanh
-    const dealii::VectorizedArray<Number> eta_vector = 2. * max_vertex_distance / fe_degree;
+      TimerOutput::Scope t(computing_timer, "RI: compute smoothed Signum function");
 
-    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> source(data);
-    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> God_grad_p(data);
-    
-    for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+      // Use maximum element size for the calculation of the argument of tanh
+      const dealii::VectorizedArray<Number> eta_vector = 2. * max_vertex_distance / fe_degree;
+
+      FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> source(data);
+      FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> God_grad_p(data);
+
+      for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
       {
         source.reinit(cell);
         source.read_dof_values(solution);
@@ -2261,8 +2185,8 @@ case 9:
           // calculate argument of tanh: (pi*phi)/(2*grad(phi)*max_cell_size/fe_degree)
           // +0.001 to avoid division through 0 in case of a singularity in the level set function
           const auto arg = numbers::PI * source.get_dof_value(q) / (eta_vector * God_grad_p.get_dof_value(q) + 0.001);
-          //tanh(x)=(e^x-e^(-x))/(e^x+e^(-x)), tanh(x) is not supported for VectorizedArray
-          const auto u = (std::exp(arg)-std::exp(-arg)) / (std::exp(arg)+std::exp(-arg));
+          // tanh(x)=(e^x-e^(-x))/(e^x+e^(-x)), tanh(x) is not supported for VectorizedArray
+          const auto u = (std::exp(arg) - std::exp(-arg)) / (std::exp(arg) + std::exp(-arg));
 
           source.submit_dof_value(u, q);
         }
@@ -2272,40 +2196,36 @@ case 9:
     }
   }
 
-
-
   template <int dim, int fe_degree>
   void
-  LevelSetOperation<dim, fe_degree>::flatten_level_set( LinearAlgebra::distributed::Vector<Number> &solution) const
+  LevelSetOperation<dim, fe_degree>::flatten_level_set(LinearAlgebra::distributed::Vector<Number> &solution) const
   {
     FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> source(data);
-    
+
     for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+    {
+      source.reinit(cell);
+      source.read_dof_values(solution);
+
+      for (unsigned int q = 0; q < source.dofs_per_cell; ++q)
       {
-        source.reinit(cell);
-        source.read_dof_values(solution);
-
-        for (unsigned int q = 0; q < source.dofs_per_cell; ++q)
-        {
         // Flatten the solution field to the value +/- (epsilon * 1.2)
-        auto u = compare_and_apply_mask<SIMDComparison::greater_than>(source.get_dof_value(q), 
-                                                                            RI_distance * 1.2,
-                                                                            RI_distance * 1.2,
-                                                                            source.get_dof_value(q));
+        auto u = compare_and_apply_mask<SIMDComparison::greater_than>(source.get_dof_value(q),
+                                                                      RI_distance * 1.2,
+                                                                      RI_distance * 1.2,
+                                                                      source.get_dof_value(q));
 
-        u = compare_and_apply_mask<SIMDComparison::less_than>(source.get_dof_value(q), 
-                                                                            -RI_distance * 1.2,
-                                                                            -RI_distance * 1.2,
-                                                                            u);
+        u = compare_and_apply_mask<SIMDComparison::less_than>(source.get_dof_value(q),
+                                                              -RI_distance * 1.2,
+                                                              -RI_distance * 1.2,
+                                                              u);
 
         source.submit_dof_value(u, q);
-        }
-
-        source.set_dof_values(solution);
       }
+
+      source.set_dof_values(solution);
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   void
@@ -2315,55 +2235,51 @@ case 9:
     compute_artificial_viscosity();
   }
 
-
-
   template <int dim, int fe_degree>
   void
-  LevelSetOperation<dim, fe_degree>::compute_RI_indicator(const LinearAlgebra::distributed::Vector<Number> & sol)
+  LevelSetOperation<dim, fe_degree>::compute_RI_indicator(const LinearAlgebra::distributed::Vector<Number> &sol)
   {
     Number u = 0.;
     Number v = 0.;
 
     FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi(data);
-    
+
     for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+    {
+      phi.reinit(cell);
+      phi.gather_evaluate(sol, EvaluationFlags::values | EvaluationFlags::gradients);
+
+      // Depending on the cell number, there might be empty lanes
+      const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(cell);
+
+      // loop over quadrature points
+      for (unsigned int q = 0; q < phi.n_q_points; ++q)
       {
-        phi.reinit(cell);
-        phi.gather_evaluate(sol, EvaluationFlags::values | EvaluationFlags::gradients);
+        const auto value = phi.get_value(q);
+        const auto grad = phi.get_gradient(q);
+        const auto norm_grad = grad.norm();
 
-        // Depending on the cell number, there might be empty lanes
-        const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(cell);
-
-        // loop over quadrature points
-        for (unsigned int q = 0; q < phi.n_q_points; ++q)
+        // loop over lanes of VectorizedArray
+        for (unsigned int lane = 0; lane < n_lanes_filled; ++lane)
         {
-          const auto value = phi.get_value(q);
-          const auto grad = phi.get_gradient(q);
-          const auto norm_grad = grad.norm();
-
-          // loop over lanes of VectorizedArray
-          for (unsigned int lane = 0; lane < n_lanes_filled; ++lane)
+          // The factor 0.8 is required for the bubble vortex test case,
+          // as the reinitialized areas in the vicinity of two adjacent
+          // zero level sections intersect and develop a kink.
+          // For non-disturbed signed distance areas +-epsilon,
+          // the factor is not necessary.
+          if (std::abs(value[lane]) <= 1.0 * RI_distance)
           {
-            // The factor 0.8 is required for the bubble vortex test case,
-            // as the reinitialized areas in the vicinity of two adjacent
-            // zero level sections intersect and develop a kink.
-            // For non-disturbed signed distance areas +-epsilon,
-            // the factor is not necessary.
-            if (std::abs(value[lane]) <= 1.0 * RI_distance)
-            {
             u += std::abs(norm_grad[lane] - 1.);
             v += 1.;
-            }
           }
         }
       }
-      u = Utilities::MPI::sum(u, MPI_COMM_WORLD);
-      v = Utilities::MPI::sum(v, MPI_COMM_WORLD);
+    }
+    u = Utilities::MPI::sum(u, MPI_COMM_WORLD);
+    v = Utilities::MPI::sum(v, MPI_COMM_WORLD);
 
-    RI_ind = u/(v+0.0001);
+    RI_ind = u / (v + 0.0001);
   }
-
-
 
   template <int dim, int fe_degree>
   const double &
@@ -2372,8 +2288,6 @@ case 9:
     return RI_ind;
   }
 
-
-
   template <int dim, int fe_degree>
   const double &
   LevelSetOperation<dim, fe_degree>::get_viscosity_value() const
@@ -2381,40 +2295,37 @@ case 9:
     return RI_ind;
   }
 
-
-
   template <int dim, int fe_degree>
   double
   LevelSetOperation<dim, fe_degree>::compute_area(const LinearAlgebra::distributed::Vector<double> &solution,
-                                                  const unsigned int                                ls_dof_idx,
-                                                  const unsigned int                                ls_quad_idx) const
+                                                  const unsigned int ls_dof_idx,
+                                                  const unsigned int ls_quad_idx) const
   {
     Number area_droplet = 0;
 
-    FEEvaluation<dim, fe_degree, fe_degree+1, 1, Number> phi(this->data, ls_dof_idx, ls_quad_idx);
+    FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi(this->data, ls_dof_idx, ls_quad_idx);
 
-    for (unsigned int cell = 0; cell <this->data.n_cell_batches(); ++cell)
+    for (unsigned int cell = 0; cell < this->data.n_cell_batches(); ++cell)
+    {
+      phi.reinit(cell);
+      phi.gather_evaluate(solution, EvaluationFlags::values);
+
+      // Depending on the cell number, there might be empty lanes
+      const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(cell);
+
+      for (unsigned int q = 0; q < phi.n_q_points; ++q)
       {
-        phi.reinit(cell);
-        phi.gather_evaluate(solution, EvaluationFlags::values);
+        // it is assumed that the level set is negative inside the droplet
+        auto mask = compare_and_apply_mask<SIMDComparison::less_than>(phi.get_value(q), 0., 1., 0.);
+        mask = mask * phi.JxW(q);
 
-        // Depending on the cell number, there might be empty lanes
-        const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(cell);
-
-        for (unsigned int q = 0; q < phi.n_q_points; ++q)
-          {
-            // it is assumed that the level set is negative inside the droplet
-            auto mask = compare_and_apply_mask<SIMDComparison::less_than>(phi.get_value(q), 0., 1., 0.);
-            mask = mask * phi.JxW(q);
-
-            // loop over lanes of VectorizedArray
-            for (unsigned int lane = 0; lane < n_lanes_filled; ++lane)
-            {
-              area_droplet += mask[lane];
-            }
-            
-          }
+        // loop over lanes of VectorizedArray
+        for (unsigned int lane = 0; lane < n_lanes_filled; ++lane)
+        {
+          area_droplet += mask[lane];
+        }
       }
+    }
 
     area_droplet = Utilities::MPI::sum(area_droplet, MPI_COMM_WORLD);
 
@@ -2422,43 +2333,41 @@ case 9:
     return area_droplet;
   }
 
-
-
   /**
-  * Compute circularity according to
-  *
-  *       _____
-  *   2 \/ π A  
-  *   ----------
-  *    /
-  *   | 1 dS
-  *  /
-  *  Γ
-  *
-  *  with the surface (2D) or volume(3D) of the droplet A. The denominator
-  *  represents the surface area of the droplet.
-  */
+   * Compute circularity according to
+   *
+   *       _____
+   *   2 \/ π A
+   *   ----------
+   *    /
+   *   | 1 dS
+   *  /
+   *  Γ
+   *
+   *  with the surface (2D) or volume(3D) of the droplet A. The denominator
+   *  represents the surface area of the droplet.
+   */
   template <int dim, int fe_degree>
   double
-  LevelSetOperation<dim, fe_degree>::compute_circularity(const LinearAlgebra::distributed::Vector<double>   &solution,
-                                                         const DoFHandler<dim>                              &dof_handler) const
+  LevelSetOperation<dim, fe_degree>::compute_circularity(const LinearAlgebra::distributed::Vector<double> &solution,
+                                                         const DoFHandler<dim> &dof_handler) const
   {
     // 1) compute the surface of the droplet
-    Triangulation<std::max(1,dim - 1), dim> tria_droplet_surface;
+    Triangulation<std::max(1, dim - 1), dim> tria_droplet_surface;
 
     GridTools::create_triangulation_with_marching_cube_algorithm(
-      tria_droplet_surface,
-      *this->data.get_mapping_info().mapping,
-      dof_handler,
-      solution,
-      0. /*iso level*/,
-      1 /*n subdivisions of surface mesh*/);
+        tria_droplet_surface,
+        *this->data.get_mapping_info().mapping,
+        dof_handler,
+        solution,
+        0. /*iso level*/,
+        1 /*n subdivisions of surface mesh*/);
 
     double area_droplet_boundary = 0;
 
     // check if partitioned domains contain surface elements in case of parallel execution
-    if(tria_droplet_surface.n_cells() > 0)
-      area_droplet_boundary = GridTools::volume<std::max(1,dim - 1), dim> (tria_droplet_surface); 
+    if (tria_droplet_surface.n_cells() > 0)
+      area_droplet_boundary = GridTools::volume<std::max(1, dim - 1), dim>(tria_droplet_surface);
 
     area_droplet_boundary = Utilities::MPI::sum(area_droplet_boundary, MPI_COMM_WORLD);
 
@@ -2468,81 +2377,77 @@ case 9:
     return 2. * std::sqrt(numbers::PI * this->area) / (area_droplet_boundary + 0.000001);
   }
 
-
-
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::set_artificial_viscosity_refinement_flags(
-                        const LinearAlgebra::distributed::Vector<Number> & sol) const
+      const LinearAlgebra::distributed::Vector<Number> &sol) const
   {
     // Resize
     const unsigned int n_macro_cells = this->data.n_cell_batches();
 
     // Set refinement and coarsen flags according to the artificial_viscosity value in each cell
     for (uint macro_cells = 0; macro_cells < n_macro_cells; ++macro_cells)
+    {
+      // Depending on the cell number, there might be empty lanes
+      const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(macro_cells);
+
+      for (uint lane = 0; lane < n_lanes_filled; ++lane)
       {
-        // Depending on the cell number, there might be empty lanes
-        const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(macro_cells);
+        auto cell = this->data.get_cell_iterator(macro_cells, lane);
 
-        for (uint lane = 0; lane < n_lanes_filled; ++lane)
-          {
-            auto cell = this->data.get_cell_iterator(macro_cells, lane);
+        if (cell->is_locally_owned() == false)
+        {
+          continue;
+        }
 
-            if (cell->is_locally_owned() == false)
-            {
-              continue;
-            }
-
-            if (artificial_viscosity[macro_cells][lane] > param.factor_refinement_flag * viscosity)
-            {
-              cell->set_refine_flag();
-            } 
-            else if (artificial_viscosity[macro_cells][lane] < param.factor_coarsen_flag * viscosity)
-            {
-              cell->set_coarsen_flag();
-            }
-            else
-            {
-              cell->clear_coarsen_flag();
-              cell->clear_refine_flag();
-            }
-          }
+        if (artificial_viscosity[macro_cells][lane] > param.factor_refinement_flag * viscosity)
+        {
+          cell->set_refine_flag();
+        }
+        else if (artificial_viscosity[macro_cells][lane] < param.factor_coarsen_flag * viscosity)
+        {
+          cell->set_coarsen_flag();
+        }
+        else
+        {
+          cell->clear_coarsen_flag();
+          cell->clear_refine_flag();
+        }
       }
+    }
 
     // set refinement flags for the elements in the vicinity of the zero level
     if (param.use_const_element_size_at_interface)
-     {
+    {
       FEEvaluation<dim, fe_degree, fe_degree + 1, 1, Number> phi(data);
-      
-        for (unsigned int macro_cells = 0; macro_cells < data.n_cell_batches(); ++macro_cells)
+
+      for (unsigned int macro_cells = 0; macro_cells < data.n_cell_batches(); ++macro_cells)
+      {
+        phi.reinit(macro_cells);
+        phi.gather_evaluate(sol, EvaluationFlags::values);
+
+        // Depending on the cell number, there might be empty lanes
+        const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(macro_cells);
+
+        // loop over quadrature points
+        for (unsigned int q = 0; q < phi.n_q_points; ++q)
         {
-          phi.reinit(macro_cells);
-          phi.gather_evaluate(sol, EvaluationFlags::values);
+          const auto value = phi.get_value(q);
 
-          // Depending on the cell number, there might be empty lanes
-          const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(macro_cells);
-
-          // loop over quadrature points
-          for (unsigned int q = 0; q < phi.n_q_points; ++q)
+          // loop over lanes of VectorizedArray
+          for (unsigned int lane = 0; lane < n_lanes_filled; ++lane)
           {
-            const auto value = phi.get_value(q);
-
-            // loop over lanes of VectorizedArray
-            for (unsigned int lane = 0; lane < n_lanes_filled; ++lane)
+            if (std::abs(value[lane]) <= param.factor_distance_const_element_size_at_interface * RI_distance)
             {
-              if (std::abs(value[lane]) <= param.factor_distance_const_element_size_at_interface * RI_distance)
-              {
-                auto cell = this->data.get_cell_iterator(macro_cells, lane);
-                cell->clear_coarsen_flag();
-                cell->set_refine_flag();
-              }
+              auto cell = this->data.get_cell_iterator(macro_cells, lane);
+              cell->clear_coarsen_flag();
+              cell->set_refine_flag();
             }
           }
         }
-     }
+      }
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   void
@@ -2560,8 +2465,6 @@ case 9:
     }
   }
 
-
-
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::set_velocity_vector(const LinearAlgebra::distributed::Vector<double> &velocity)
@@ -2570,8 +2473,6 @@ case 9:
     velocity_operator.copy_locally_owned_data_from(velocity);
     velocity_operator.update_ghost_values();
   }
-
-
 
   template <int dim, int fe_degree>
   void
@@ -2584,8 +2485,6 @@ case 9:
       viscosity = param.factor_diffusivity * vertex_distance / fe_degree;
   }
 
-
-
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::compute_RI_distance(const double vertex_distance)
@@ -2594,9 +2493,7 @@ case 9:
     RI_distance = vertex_distance / fe_degree * param.factor_RI_distance;
   }
 
-
-
-  template<int dim, int fe_degree>
+  template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::compute_penalty_parameter()
   {
@@ -2605,51 +2502,47 @@ case 9:
     array_penalty_parameter.resize(n_macro_cells);
 
     for (uint macro_cells = 0; macro_cells < n_macro_cells; ++macro_cells)
+    {
+      // Depending on the cell number, there might be empty lanes
+      const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(macro_cells);
+
+      for (uint lane = 0; lane < n_lanes_filled; ++lane)
       {
-        // Depending on the cell number, there might be empty lanes
-        const unsigned int n_lanes_filled = this->data.n_active_entries_per_cell_batch(macro_cells);
+        auto cell = this->data.get_cell_iterator(macro_cells, lane);
 
-        for (uint lane = 0; lane < n_lanes_filled; ++lane)
-          {
-            auto cell = this->data.get_cell_iterator(macro_cells, lane);
-
-            array_penalty_parameter[macro_cells][lane] = 1. / cell->minimum_vertex_distance() * 
-                                                         (param.fe_degree + 1) * (param.fe_degree + 1) * 
-                                                         param.IP_diffusion;
-          }
+        array_penalty_parameter[macro_cells][lane] = 1. / cell->minimum_vertex_distance() *
+                                                     (param.fe_degree + 1) * (param.fe_degree + 1) *
+                                                     param.IP_diffusion;
       }
+    }
   }
-
-
 
   template <int dim, int fe_degree>
   void
-  LevelSetOperation<dim, fe_degree>::vmult(LinearAlgebra::distributed::Vector<Number>       &dst,
+  LevelSetOperation<dim, fe_degree>::vmult(LinearAlgebra::distributed::Vector<Number> &dst,
                                            const LinearAlgebra::distributed::Vector<Number> &src) const
   {
     this->data.loop(
-      &LevelSetOperation::local_apply_domain_RI_diffusion_implicit,
-      &LevelSetOperation::local_apply_inner_face_RI_diffusion_implicit,
-      &LevelSetOperation::local_apply_boundary_face_RI_diffusion_implicit,
-      this,
-      dst,
-      src,
-      true,
-      MatrixFree<dim, Number>::DataAccessOnFaces::gradients,
-      MatrixFree<dim, Number>::DataAccessOnFaces::gradients);
+        &LevelSetOperation::local_apply_domain_RI_diffusion_implicit,
+        &LevelSetOperation::local_apply_inner_face_RI_diffusion_implicit,
+        &LevelSetOperation::local_apply_boundary_face_RI_diffusion_implicit,
+        this,
+        dst,
+        src,
+        true,
+        MatrixFree<dim, Number>::DataAccessOnFaces::gradients,
+        MatrixFree<dim, Number>::DataAccessOnFaces::gradients);
   }
-
-
 
   template <int dim, int fe_degree>
   void
   LevelSetOperation<dim, fe_degree>::apply_viscosity_implicit(LinearAlgebra::distributed::Vector<Number> &solution,
                                                               LinearAlgebra::distributed::Vector<Number> &rk_register,
-                                                              const double                                delta_t,
-                                                              TimerOutput                                &computing_timer) const
+                                                              const double delta_t,
+                                                              TimerOutput &computing_timer) const
   {
     TimerOutput::Scope t(computing_timer, "RI: IMEX - solve linear system");
-    
+
     dt_RI = delta_t;
 
     Preconditioner<dim, fe_degree> p(this->data);
@@ -2661,151 +2554,147 @@ case 9:
     SolverCG<LinearAlgebra::distributed::Vector<Number>> solver(reduction_control);
 
     // observe condition number
-    solver.connect_condition_number_slot([&](double condition_number) {
-      this->cond_number += condition_number;
-    });
+    solver.connect_condition_number_slot([&](double condition_number)
+                                         { this->cond_number += condition_number; });
 
     solver.solve(*this, solution, rk_register, p);
 
     this->CG_iterations += reduction_control.last_step();
   }
 
-
-
   template <int dim, int fe_degree>
   double
   LevelSetOperation<dim, fe_degree>::
-    compute_time_step_advection() const
+      compute_time_step_advection() const
   {
     Number max_transport = 0.;
 
     FEEvaluation<dim, fe_degree, fe_degree + 1, dim, Number> phi_vel(data, 2);
 
-      for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
-       {
-          phi_vel.reinit(cell);
-          phi_vel.gather_evaluate(velocity_operator, EvaluationFlags::values);
+    for (unsigned int cell = 0; cell < data.n_cell_batches(); ++cell)
+    {
+      phi_vel.reinit(cell);
+      phi_vel.gather_evaluate(velocity_operator, EvaluationFlags::values);
 
-          dealii::VectorizedArray<Number> local_max = 0.;
+      dealii::VectorizedArray<Number> local_max = 0.;
 
-          for (unsigned int q = 0; q < phi_vel.n_q_points; ++q)
-            {
-              const auto velocity = phi_vel.get_value(q);
+      for (unsigned int q = 0; q < phi_vel.n_q_points; ++q)
+      {
+        const auto velocity = phi_vel.get_value(q);
 
-              const auto inverse_jacobian = phi_vel.inverse_jacobian(q);
-              const auto convective_speed = inverse_jacobian * velocity;
+        const auto inverse_jacobian = phi_vel.inverse_jacobian(q);
+        const auto convective_speed = inverse_jacobian * velocity;
 
-              dealii::VectorizedArray<Number> convective_limit = 0.;
+        dealii::VectorizedArray<Number> convective_limit = 0.;
 
-              for (unsigned int d = 0; d < dim; ++d)
-                convective_limit = std::max(convective_limit, std::abs(convective_speed[d]));
+        for (unsigned int d = 0; d < dim; ++d)
+          convective_limit = std::max(convective_limit, std::abs(convective_speed[d]));
 
-              local_max = std::max(local_max, convective_limit);
-            }
+        local_max = std::max(local_max, convective_limit);
+      }
 
-          // There might be empty cells in the cell-batch
-          for (unsigned int v = 0; v < data.n_active_entries_per_cell_batch(cell); ++v)
-            for (unsigned int d = 0; d < dim; ++d)
-            max_transport = std::max(max_transport, local_max[v]);
-        }
+      // There might be empty cells in the cell-batch
+      for (unsigned int v = 0; v < data.n_active_entries_per_cell_batch(cell); ++v)
+        for (unsigned int d = 0; d < dim; ++d)
+          max_transport = std::max(max_transport, local_max[v]);
+    }
 
-      max_transport = Utilities::MPI::max(max_transport, velocity_operator.get_mpi_communicator());
+    max_transport = Utilities::MPI::max(max_transport, velocity_operator.get_mpi_communicator());
 
-      // The advection time step size is not allowed to exceed a certain value, 
-      // as for currently very low velocities, the time step size
-      // would be very large and lead to inaccurate results.
-      // (e. g. for the bubble vortex test case at half simulation time.)
-      // Adjust max_time_step_size_advection for the current simulation case.
+    // The advection time step size is not allowed to exceed a certain value,
+    // as for currently very low velocities, the time step size
+    // would be very large and lead to inaccurate results.
+    // (e. g. for the bubble vortex test case at half simulation time.)
+    // Adjust max_time_step_size_advection for the current simulation case.
 
-      //const Number max_time_step_size_advection = 0.001;
-      const Number max_time_step_size_advection = std::numeric_limits<int>::max();
+    // const Number max_time_step_size_advection = 0.001;
+    const Number max_time_step_size_advection = std::numeric_limits<int>::max();
 
-      return std::min(max_time_step_size_advection, param.courant_number_advection / (std::pow(fe_degree, 2) * max_transport));
+    return std::min(max_time_step_size_advection, param.courant_number_advection / (std::pow(fe_degree, 2) * max_transport));
   }
 
-
- class LowStorageRungeKuttaIntegrators
+  class LowStorageRungeKuttaIntegrators
   {
   public:
-    LowStorageRungeKuttaIntegrators(const LowStorageRungeKuttaScheme scheme, const LevelSetProblemParameters &param): param(param)
+    LowStorageRungeKuttaIntegrators(const LowStorageRungeKuttaScheme scheme, const LevelSetProblemParameters &param) : param(param)
     {
       switch (scheme)
-        {
+      {
 
-                      case stage_1_order_1:
-    {
-      bi = {{1.0}};
-      ai = {{}};
-      break;
-    }
-          case stage_3_order_3:
-            {
-              bi = {{0.245170287303492, 0.184896052186740, 0.569933660509768}};
-              ai = {{0.755726351946097, 0.386954477304099}};
+      case stage_1_order_1:
+      {
+        bi = {{1.0}};
+        ai = {{}};
+        break;
+      }
+      case stage_3_order_3:
+      {
+        bi = {{0.245170287303492, 0.184896052186740, 0.569933660509768}};
+        ai = {{0.755726351946097, 0.386954477304099}};
 
-              break;
-            }
+        break;
+      }
 
-          case stage_5_order_4:
-            {
-              bi = {{1153189308089. / 22510343858157.,
-                     1772645290293. / 4653164025191.,
-                     -1672844663538. / 4480602732383.,
-                     2114624349019. / 3568978502595.,
-                     5198255086312. / 14908931495163.}};
-              ai = {{970286171893. / 4311952581923.,
-                     6584761158862. / 12103376702013.,
-                     2251764453980. / 15575788980749.,
-                     26877169314380. / 34165994151039.}};
+      case stage_5_order_4:
+      {
+        bi = {{1153189308089. / 22510343858157.,
+               1772645290293. / 4653164025191.,
+               -1672844663538. / 4480602732383.,
+               2114624349019. / 3568978502595.,
+               5198255086312. / 14908931495163.}};
+        ai = {{970286171893. / 4311952581923.,
+               6584761158862. / 12103376702013.,
+               2251764453980. / 15575788980749.,
+               26877169314380. / 34165994151039.}};
 
-              break;
-            }
+        break;
+      }
 
-          case stage_7_order_4:
-            {
-              bi = {{0.0941840925477795334,
-                     0.149683694803496998,
-                     0.285204742060440058,
-                     -0.122201846148053668,
-                     0.0605151571191401122,
-                     0.345986987898399296,
-                     0.186627171718797670}};
-              ai = {{0.241566650129646868 + bi[0],
-                     0.0423866513027719953 + bi[1],
-                     0.215602732678803776 + bi[2],
-                     0.232328007537583987 + bi[3],
-                     0.256223412574146438 + bi[4],
-                     0.0978694102142697230 + bi[5]}};
+      case stage_7_order_4:
+      {
+        bi = {{0.0941840925477795334,
+               0.149683694803496998,
+               0.285204742060440058,
+               -0.122201846148053668,
+               0.0605151571191401122,
+               0.345986987898399296,
+               0.186627171718797670}};
+        ai = {{0.241566650129646868 + bi[0],
+               0.0423866513027719953 + bi[1],
+               0.215602732678803776 + bi[2],
+               0.232328007537583987 + bi[3],
+               0.256223412574146438 + bi[4],
+               0.0978694102142697230 + bi[5]}};
 
-              break;
-            }
+        break;
+      }
 
-          case stage_9_order_5:
-            {
-              bi = {{2274579626619. / 23610510767302.,
-                     693987741272. / 12394497460941.,
-                     -347131529483. / 15096185902911.,
-                     1144057200723. / 32081666971178.,
-                     1562491064753. / 11797114684756.,
-                     13113619727965. / 44346030145118.,
-                     393957816125. / 7825732611452.,
-                     720647959663. / 6565743875477.,
-                     3559252274877. / 14424734981077.}};
-              ai = {{1107026461565. / 5417078080134.,
-                     38141181049399. / 41724347789894.,
-                     493273079041. / 11940823631197.,
-                     1851571280403. / 6147804934346.,
-                     11782306865191. / 62590030070788.,
-                     9452544825720. / 13648368537481.,
-                     4435885630781. / 26285702406235.,
-                     2357909744247. / 11371140753790.}};
+      case stage_9_order_5:
+      {
+        bi = {{2274579626619. / 23610510767302.,
+               693987741272. / 12394497460941.,
+               -347131529483. / 15096185902911.,
+               1144057200723. / 32081666971178.,
+               1562491064753. / 11797114684756.,
+               13113619727965. / 44346030145118.,
+               393957816125. / 7825732611452.,
+               720647959663. / 6565743875477.,
+               3559252274877. / 14424734981077.}};
+        ai = {{1107026461565. / 5417078080134.,
+               38141181049399. / 41724347789894.,
+               493273079041. / 11940823631197.,
+               1851571280403. / 6147804934346.,
+               11782306865191. / 62590030070788.,
+               9452544825720. / 13648368537481.,
+               4435885630781. / 26285702406235.,
+               2357909744247. / 11371140753790.}};
 
-              break;
-            }
+        break;
+      }
 
-          default:
-            AssertThrow(false, ExcNotImplemented());
-        }
+      default:
+        AssertThrow(false, ExcNotImplemented());
+      }
     }
 
     unsigned int
@@ -2816,13 +2705,13 @@ case 9:
 
     template <typename VectorType, typename Operator>
     void
-    perform_time_step(const Operator         &pde_operator,
-                      const double            current_time,
-                      const double            time_step,
-                      VectorType             &solution,
-                      VectorType             &vec_ri,
-                      VectorType             &vec_ki,
-                      TimerOutput            &computing_timer) const
+    perform_time_step(const Operator &pde_operator,
+                      const double current_time,
+                      const double time_step,
+                      VectorType &solution,
+                      VectorType &vec_ri,
+                      VectorType &vec_ki,
+                      TimerOutput &computing_timer) const
     {
       AssertDimension(ai.size() + 1, bi.size());
 
@@ -2836,33 +2725,31 @@ case 9:
                                  computing_timer);
       double sum_previous_bi = 0;
       for (unsigned int stage = 1; stage < bi.size(); ++stage)
-        {
-          const double c_i = sum_previous_bi + ai[stage - 1];
-          pde_operator.perform_stage(current_time + c_i * time_step,
-                                     bi[stage] * time_step,
-                                     (stage == bi.size() - 1 ?
-                                        0 :
-                                        ai[stage] * time_step),
-                                     vec_ri,
-                                     vec_ki,
-                                     solution,
-                                     vec_ri,
-                                     computing_timer);
-          sum_previous_bi += bi[stage - 1];
-        }
+      {
+        const double c_i = sum_previous_bi + ai[stage - 1];
+        pde_operator.perform_stage(current_time + c_i * time_step,
+                                   bi[stage] * time_step,
+                                   (stage == bi.size() - 1 ? 0 : ai[stage] * time_step),
+                                   vec_ri,
+                                   vec_ki,
+                                   solution,
+                                   vec_ri,
+                                   computing_timer);
+        sum_previous_bi += bi[stage - 1];
+      }
     }
 
     template <typename VectorType, typename Operator>
     void
-    perform_time_step_RI(Operator     &pde_operator,
-                         const double  current_time,
-                         const double  time_step,
-                         VectorType   &solution,
-                         VectorType   &vec_ri,
-                         VectorType   &vec_ki,
-                         VectorType   &num_Hamiltonian,
-                         VectorType   &Signum_smoothed,
-                         TimerOutput  &computing_timer) const
+    perform_time_step_RI(Operator &pde_operator,
+                         const double current_time,
+                         const double time_step,
+                         VectorType &solution,
+                         VectorType &vec_ri,
+                         VectorType &vec_ki,
+                         VectorType &num_Hamiltonian,
+                         VectorType &Signum_smoothed,
+                         TimerOutput &computing_timer) const
     {
       AssertDimension(ai.size() + 1, bi.size());
 
@@ -2873,35 +2760,33 @@ case 9:
 
       // calculate numerical Hamiltonian with Godunov method
       pde_operator.Godunov_Hamiltonian(solution, num_Hamiltonian, Signum_smoothed, computing_timer);
-      
-      pde_operator.perform_stage_RI(current_time,
-                                 bi[0] * time_step,
-                                 ai[0] * time_step,
-                                 vec_ri,
-                                 solution,
-                                 vec_ri,
-                                 num_Hamiltonian,
-                                 computing_timer);
-      double sum_previous_bi = 0;
-      
-      for (unsigned int stage = 1; stage < bi.size(); ++stage)
-        {
-          // calculate numerical Hamiltonian with Godunov method
-          pde_operator.Godunov_Hamiltonian(solution, num_Hamiltonian, Signum_smoothed, computing_timer);
 
-          const double c_i = sum_previous_bi + ai[stage - 1];
-          pde_operator.perform_stage_RI(current_time + c_i * time_step,
-                                     bi[stage] * time_step,
-                                     (stage == bi.size() - 1 ?
-                                        0 :
-                                        ai[stage] * time_step),
-                                     vec_ki,
-                                     solution,
-                                     vec_ri,
-                                     num_Hamiltonian,
-                                     computing_timer);
-          sum_previous_bi += bi[stage - 1];
-        }
+      pde_operator.perform_stage_RI(current_time,
+                                    bi[0] * time_step,
+                                    ai[0] * time_step,
+                                    vec_ri,
+                                    solution,
+                                    vec_ri,
+                                    num_Hamiltonian,
+                                    computing_timer);
+      double sum_previous_bi = 0;
+
+      for (unsigned int stage = 1; stage < bi.size(); ++stage)
+      {
+        // calculate numerical Hamiltonian with Godunov method
+        pde_operator.Godunov_Hamiltonian(solution, num_Hamiltonian, Signum_smoothed, computing_timer);
+
+        const double c_i = sum_previous_bi + ai[stage - 1];
+        pde_operator.perform_stage_RI(current_time + c_i * time_step,
+                                      bi[stage] * time_step,
+                                      (stage == bi.size() - 1 ? 0 : ai[stage] * time_step),
+                                      vec_ki,
+                                      solution,
+                                      vec_ri,
+                                      num_Hamiltonian,
+                                      computing_timer);
+        sum_previous_bi += bi[stage - 1];
+      }
     }
 
   private:
@@ -2909,7 +2794,6 @@ case 9:
     std::vector<double> ai;
     const LevelSetProblemParameters &param;
   };
-
 
   template <int dim, int fe_degree>
   class AdvectionRIProblem
@@ -2939,26 +2823,26 @@ case 9:
 
     template <typename VectorType, typename Operator>
     void
-    refine_grid(Operator            &pde_operator,
-                const unsigned int   number,
-                VectorType          &rk_reg_1,
-                VectorType          &rk_reg_2,
-                VectorType          &num_Hamiltonian,
-                VectorType          &Signum_smoothed,
-                VectorType          &God_grad,
-                VectorType          &velocity);
+    refine_grid(Operator &pde_operator,
+                const unsigned int number,
+                VectorType &rk_reg_1,
+                VectorType &rk_reg_2,
+                VectorType &num_Hamiltonian,
+                VectorType &Signum_smoothed,
+                VectorType &God_grad,
+                VectorType &velocity);
 
     LinearAlgebra::distributed::Vector<Number> solution;
     LinearAlgebra::distributed::Vector<Number> velocity;
 
     std::shared_ptr<Triangulation<dim>> triangulation;
-    MappingQGeneric<dim>                mapping;
-    FESystem<dim>                       fe;
-    FESystem<dim>                       fe_legendre;
-    FESystem<dim>                       fe_vel;
-    DoFHandler<dim>                     dof_handler;
-    DoFHandler<dim>                     dof_handler_legendre;
-    DoFHandler<dim>                     dof_handler_vel;
+    MappingQGeneric<dim> mapping;
+    FESystem<dim> fe;
+    FESystem<dim> fe_legendre;
+    FESystem<dim> fe_vel;
+    DoFHandler<dim> dof_handler;
+    DoFHandler<dim> dof_handler_legendre;
+    DoFHandler<dim> dof_handler_vel;
 
     IndexSet locally_relevant_dofs;
 
@@ -2971,32 +2855,22 @@ case 9:
     TimerOutput computing_timer;
   };
 
-
-
   template <int dim, int fe_degree>
   AdvectionRIProblem<dim, fe_degree>::AdvectionRIProblem(const LevelSetProblemParameters &param)
-    : mapping(fe_degree)
-    , fe(FE_DGQ<dim>(fe_degree), 1)
-    , fe_legendre(FE_DGQLegendre<dim>(fe_degree), 1)
-    , fe_vel(FE_DGQ<dim>(fe_degree), dim)
-    , time(0)
-    , pcout(std::cout, Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-    , param(param)
-    , computing_timer(MPI_COMM_WORLD,
-                      pcout,
-                      TimerOutput::never,
-                      TimerOutput::wall_times)
+      : mapping(fe_degree), fe(FE_DGQ<dim>(fe_degree), 1), fe_legendre(FE_DGQLegendre<dim>(fe_degree), 1), fe_vel(FE_DGQ<dim>(fe_degree), dim), time(0), pcout(std::cout, Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0), param(param), computing_timer(MPI_COMM_WORLD,
+                                                                                                                                                                                                                                                                pcout,
+                                                                                                                                                                                                                                                                TimerOutput::never,
+                                                                                                                                                                                                                                                                TimerOutput::wall_times)
   {
 #ifdef DEAL_II_WITH_P4EST
     if (dim > 1)
       triangulation =
-        std::make_shared<parallel::distributed::Triangulation<dim>>(
-          MPI_COMM_WORLD);
+          std::make_shared<parallel::distributed::Triangulation<dim>>(
+              MPI_COMM_WORLD);
     else
 #endif
       triangulation = std::make_shared<Triangulation<dim>>();
   }
-
 
   template <int dim, int fe_degree>
   void
@@ -3009,21 +2883,38 @@ case 9:
     for (unsigned int d = 0; d < dim; ++d)
     {
       p2[d] = 1;
-      //p1[d] = -2;
+      // p1[d] = -2;
     }
-    //p2[0] = 3;
+    // p2[0] = 3;
     std::vector<unsigned int> subdivisions(dim, 1);
-    //subdivisions[0] = 3;
+    // subdivisions[0] = 3;
 
     GridGenerator::subdivided_hyper_rectangle(*triangulation,
                                               subdivisions,
                                               p1,
                                               p2);
 
+    for (const auto &cell : triangulation->cell_iterators())
+      for (const auto &face : cell->face_iterators())
+      {
+        const auto center = face->center();
+
+        //Inflow
+        if ((std::fabs(center[0] - (0.0)) < 1e-12)){
+          face->set_boundary_id(0);
+        }
+        //Wall
+        if ((std::fabs(center[1] - (1.0)) < 1e-12) || std::fabs(center[1] - (0.0)) < 1e-12){
+          face->set_boundary_id(1);
+        }
+        //Outflow
+        if ((std::fabs(center[0] - (1.0)) < 1e-12) ){
+          face->set_boundary_id(2);
+        }
+      }
+
     triangulation->refine_global(param.n_global_refinements);
   }
-
-
 
   template <int dim, int fe_degree>
   void
@@ -3044,64 +2935,56 @@ case 9:
 #endif
   }
 
-
-
   // Compute the gradient of the level-set field for output
   template <int dim>
   class GradientPostprocessor : public DataPostprocessorVector<dim>
   {
   public:
-    GradientPostprocessor ()
-      :
-      DataPostprocessorVector<dim> ("grad_u",
-                                    update_gradients)
-    {}
-  
-
-
-    virtual
-    void
-    evaluate_scalar_field
-    (const DataPostprocessorInputs::Scalar<dim> &param,
-     std::vector<Vector<double>>                &computed_quantities) const override
+    GradientPostprocessor()
+        : DataPostprocessorVector<dim>("grad_u",
+                                       update_gradients)
     {
-      AssertDimension (param.solution_gradients.size(),
+    }
+
+    virtual void
+    evaluate_scalar_field(const DataPostprocessorInputs::Scalar<dim> &param,
+                          std::vector<Vector<double>> &computed_quantities) const override
+    {
+      AssertDimension(param.solution_gradients.size(),
                       computed_quantities.size());
-  
-      for (unsigned int p=0; p<param.solution_gradients.size(); ++p)
-        {
-          AssertDimension (computed_quantities[p].size(), dim);
-          for (unsigned int d=0; d<dim; ++d)
-            computed_quantities[p][d] = param.solution_gradients[p][d];
-        }
+
+      for (unsigned int p = 0; p < param.solution_gradients.size(); ++p)
+      {
+        AssertDimension(computed_quantities[p].size(), dim);
+        for (unsigned int d = 0; d < dim; ++d)
+          computed_quantities[p][d] = param.solution_gradients[p][d];
+      }
     }
   };
 
-
-
   template <int dim, int fe_degree>
   void
-  AdvectionRIProblem<dim, fe_degree>::output_results(const unsigned int   output_number,
-                                                     const Tensor<1, 2>   mass_energy,
-                                                     const Number         RI_indicator,
-                                                     const Number         n_RI_timestep_ave,
-                                                     const Number         area,
-                                                     const Number         circularity,
-                                                     const Number         time_step_advection,
-                                                     const Number         time_step_RI,
-                                                     const Number         ave_CG_iterations,
-                                                     const Number         ave_cond_number)
+  AdvectionRIProblem<dim, fe_degree>::output_results(const unsigned int output_number,
+                                                     const Tensor<1, 2> mass_energy,
+                                                     const Number RI_indicator,
+                                                     const Number n_RI_timestep_ave,
+                                                     const Number area,
+                                                     const Number circularity,
+                                                     const Number time_step_advection,
+                                                     const Number time_step_RI,
+                                                     const Number ave_CG_iterations,
+                                                     const Number ave_cond_number)
   {
-    pcout << "  -------------------------------------------" << std::endl 
+    pcout << "  -------------------------------------------" << std::endl
           << "   Time: " << std::setw(25) << std::setprecision(3) << time << std::endl
-          << "  -------------------------------------------" << std::endl; 
+          << "  -------------------------------------------" << std::endl;
     if (param.dynamic_sim)
     {
       pcout << "   time step adv: " << std::setw(16) << std::setprecision(3) << time_step_advection << std::endl;
     }
     pcout << "   time step RI: " << std::setw(17) << std::setprecision(3) << time_step_RI << std::endl
           << "   mass: " << std::setprecision(8) << std::setw(25) << mass_energy[0] << std::endl
-          << "   energy: " << std::setprecision(8) << std::setw(23) << mass_energy[1] << std::endl 
+          << "   energy: " << std::setprecision(8) << std::setw(23) << mass_energy[1] << std::endl
           << "   area: " << std::setprecision(6) << std::setw(25) << area << std::endl
           << "   circularity: " << std::setprecision(6) << std::setw(18) << circularity << std::endl
           << "   RI quality: " << std::setw(19) << std::setprecision(6) << RI_indicator << std::endl
@@ -3109,11 +2992,11 @@ case 9:
           << "   NoDoF: " << std::setw(24) << dof_handler.n_dofs() << std::endl;
     if (param.dynamic_sim)
     {
-      pcout << "   ave RI/adv.: " << std::setw(18) << std::setprecision(5)<< n_RI_timestep_ave << std::endl;
+      pcout << "   ave RI/adv.: " << std::setw(18) << std::setprecision(5) << n_RI_timestep_ave << std::endl;
     }
-          if (param.use_IMEX)
-            pcout << "   ave CG iterations: " << std::setw(12) << std::setprecision(5)<< ave_CG_iterations << std::endl
-            << "   ave condition number: " << std::setw(9) << std::setprecision(5)<< ave_cond_number << std::endl;
+    if (param.use_IMEX)
+      pcout << "   ave CG iterations: " << std::setw(12) << std::setprecision(5) << ave_CG_iterations << std::endl
+            << "   ave condition number: " << std::setw(9) << std::setprecision(5) << ave_cond_number << std::endl;
     pcout << "  -------------------------------------------" << std::endl;
 
     if (!param.print_vtu)
@@ -3123,20 +3006,20 @@ case 9:
     GradientPostprocessor<dim> gradient_postprocessor;
 
     // Write output to a vtu file
-    DataOut<dim>          data_out;
+    DataOut<dim> data_out;
     if (param.dynamic_sim)
     {
-      DataOut<dim>          data_out_vel;
+      DataOut<dim> data_out_vel;
       data_out_vel.attach_dof_handler(dof_handler_vel);
       data_out_vel.add_data_vector(velocity, "velocity");
       data_out_vel.build_patches(mapping,
                                  fe_degree,
                                  DataOut<dim>::curved_inner_cells);
       const std::string filename_velocity =
-        "velocity_" + Utilities::int_to_string(output_number, 3) + ".vtu";
+          "velocity_" + Utilities::int_to_string(output_number, 3) + ".vtu";
       data_out_vel.write_vtu_in_parallel(filename_velocity, MPI_COMM_WORLD);
     }
-     
+
     DataOutBase::VtkFlags flags;
     flags.write_higher_order_cells = true;
     data_out.set_flags(flags);
@@ -3149,36 +3032,34 @@ case 9:
                            DataOut<dim>::curved_inner_cells);
 
     const std::string filename =
-      "solution_" + Utilities::int_to_string(output_number, 3) + ".vtu";
+        "solution_" + Utilities::int_to_string(output_number, 3) + ".vtu";
     data_out.write_vtu_in_parallel(filename, MPI_COMM_WORLD);
   }
-
-
 
   template <int dim, int fe_degree>
   template <typename VectorType, typename Operator>
   void
-  AdvectionRIProblem<dim, fe_degree>::refine_grid(Operator            &pde_operator,
+  AdvectionRIProblem<dim, fe_degree>::refine_grid(Operator &pde_operator,
                                                   const unsigned int,
-                                                  VectorType          &rk_reg1,
-                                                  VectorType          &rk_reg2,
-                                                  VectorType&         num_Hamiltonian,
-                                                  VectorType&         Signum_smoothed,
-                                                  VectorType&         God_grad,
-                                                  VectorType&         velocity)
+                                                  VectorType &rk_reg1,
+                                                  VectorType &rk_reg2,
+                                                  VectorType &num_Hamiltonian,
+                                                  VectorType &Signum_smoothed,
+                                                  VectorType &God_grad,
+                                                  VectorType &velocity)
   {
     pde_operator.set_artificial_viscosity_refinement_flags(solution);
 
     // delete flags, if max/min level is reached
-    if (triangulation->n_levels() > (param.n_global_refinements+param.n_refinement_levels))
+    if (triangulation->n_levels() > (param.n_global_refinements + param.n_refinement_levels))
       for (typename Triangulation<dim>::active_cell_iterator cell =
-             triangulation->begin_active(param.n_global_refinements+param.n_refinement_levels);
+               triangulation->begin_active(param.n_global_refinements + param.n_refinement_levels);
            cell != triangulation->end();
            ++cell)
         if (cell->is_locally_owned())
           cell->clear_refine_flag();
     for (typename Triangulation<dim>::active_cell_iterator cell =
-           triangulation->begin_active(param.n_global_refinements);
+             triangulation->begin_active(param.n_global_refinements);
          cell != triangulation->end_active(param.n_global_refinements);
          ++cell)
       if (cell->is_locally_owned())
@@ -3187,64 +3068,64 @@ case 9:
     triangulation->prepare_coarsening_and_refinement();
 
     parallel::distributed::Triangulation<dim> *tria =
-      dynamic_cast<parallel::distributed::Triangulation<dim> *>(
-        triangulation.get());
+        dynamic_cast<parallel::distributed::Triangulation<dim> *>(
+            triangulation.get());
 
     if (tria)
-      {
-        parallel::distributed::SolutionTransfer<dim, VectorType>
+    {
+      parallel::distributed::SolutionTransfer<dim, VectorType>
           solution_transfer(dof_handler);
 
-        solution_transfer.prepare_for_coarsening_and_refinement(solution);
+      solution_transfer.prepare_for_coarsening_and_refinement(solution);
 
-        triangulation->execute_coarsening_and_refinement();
+      triangulation->execute_coarsening_and_refinement();
 
-        // reinit data
-        dof_handler.distribute_dofs(fe);
-        dof_handler_legendre.distribute_dofs(fe_legendre);
-        dof_handler_vel.distribute_dofs(fe_vel);
+      // reinit data
+      dof_handler.distribute_dofs(fe);
+      dof_handler_legendre.distribute_dofs(fe_legendre);
+      dof_handler_vel.distribute_dofs(fe_vel);
 
-        pde_operator.reinit(dof_handler,
-                              dof_handler_legendre,
-                              dof_handler_vel);
+      pde_operator.reinit(dof_handler,
+                          dof_handler_legendre,
+                          dof_handler_vel);
 
-        // and interpolate the solution
-        VectorType interpolated_solution;
-        // create VectorType in the right size (=new mesh) here
-        pde_operator.initialize_dof_vector(interpolated_solution, 0);
+      // and interpolate the solution
+      VectorType interpolated_solution;
+      // create VectorType in the right size (=new mesh) here
+      pde_operator.initialize_dof_vector(interpolated_solution, 0);
 
-        solution_transfer.interpolate(interpolated_solution);
+      solution_transfer.interpolate(interpolated_solution);
 
-        pde_operator.initialize_dof_vector(solution, 0);
-        solution = interpolated_solution;
-      }
+      pde_operator.initialize_dof_vector(solution, 0);
+      solution = interpolated_solution;
+    }
     else
-      {
-        SolutionTransfer<dim, VectorType> solution_transfer(dof_handler);
+    {
+      SolutionTransfer<dim, VectorType> solution_transfer(dof_handler);
 
-        solution_transfer.prepare_for_coarsening_and_refinement(solution);
+      solution_transfer.prepare_for_coarsening_and_refinement(solution);
 
-        triangulation->execute_coarsening_and_refinement();
+      triangulation->execute_coarsening_and_refinement();
 
-        // reinit data
-        dof_handler.distribute_dofs(fe);
-        dof_handler_legendre.distribute_dofs(fe_legendre);
-        dof_handler_vel.distribute_dofs(fe_vel);
+      // reinit data
+      dof_handler.distribute_dofs(fe);
+      dof_handler_legendre.distribute_dofs(fe_legendre);
+      dof_handler_vel.distribute_dofs(fe_vel);
 
-        pde_operator.reinit(dof_handler,
-                            dof_handler_legendre,
-                            dof_handler_vel);
+      pde_operator.reinit(dof_handler,
+                          dof_handler_legendre,
+                          dof_handler_vel);
 
-        // and interpolate the solution
-        VectorType interpolated_solution;
-        // create VectorType in the right size (=new mesh) here
-        pde_operator.initialize_dof_vector(interpolated_solution, 0);
+      // and interpolate the solution
+      VectorType interpolated_solution;
+      // create VectorType in the right size (=new mesh) here
+      pde_operator.initialize_dof_vector(interpolated_solution, 0);
 
-        solution_transfer.interpolate(solution, interpolated_solution);
+      solution_transfer.interpolate(solution, interpolated_solution);
 
-        pde_operator.initialize_dof_vector(solution, 0);
-        solution = interpolated_solution;
-      }
+      pde_operator.initialize_dof_vector(solution, 0);
+      solution = interpolated_solution;
+    }
 
     // reinit vectors
     rk_reg1.reinit(solution);
@@ -3255,12 +3136,12 @@ case 9:
     pde_operator.initialize_dof_vector(velocity, 2);
   }
 
-    template <int dim, int fe_degree>
+  template <int dim, int fe_degree>
   void
   AdvectionRIProblem<dim, fe_degree>::run()
   {
 
-using AdvectionIntegratorConcretization = typename TimeIntegratorConcretization::Concretize<AdvectionOperator<dim, fe_degree>, dim, fe_degree, advection_integrator>::type;
+    using AdvectionIntegratorConcretization = typename TimeIntegratorConcretization::Concretize<AdvectionOperator<dim, fe_degree>, dim, fe_degree, advection_integrator>::type;
     using ReinitilizationIntegratorConcretization = typename TimeIntegratorConcretization::Concretize<ReinitilizationOperator<dim, fe_degree>, dim, fe_degree, reinitilization_integrator>::type;
 
     make_grid();
@@ -3276,7 +3157,6 @@ using AdvectionIntegratorConcretization = typename TimeIntegratorConcretization:
     // Initialize the advection operator
     LevelSetOperation<dim, fe_degree> level_set_operator(param);
 
-
     level_set_operator.reinit(dof_handler, dof_handler_legendre, dof_handler_vel);
     level_set_operator.initialize_dof_vector(solution, 0);
     level_set_operator.initialize_dof_vector(velocity, 2);
@@ -3288,74 +3168,72 @@ using AdvectionIntegratorConcretization = typename TimeIntegratorConcretization:
     LinearAlgebra::distributed::Vector<Number> God_grad(solution);
 
     // Initialize timer
-    Timer        timer;
+    Timer timer;
 
     // Initialize auxiliary variables
-    Number       RI_indicator = 0.;
-    Number       circularity = 0.;
-    Number       area = 1.;
-    Number       ave_CG_iterations = 0.;
-    Number       ave_cond_number = 0.;
+    Number RI_indicator = 0.;
+    Number circularity = 0.;
+    Number area = 1.;
+    Number ave_CG_iterations = 0.;
+    Number ave_cond_number = 0.;
     unsigned int timestep_RI_counter = 0;
     unsigned int RI_counter = 0;
-    Number       n_RI_timestep_ave = 0.;
-    Number       glob_min_vertex_distance = 0.;
-    Number       glob_max_vertex_distance = 0.;
-    Number       min_vertex_distance = 0.;
-    Number       wtime = 0.;
-    Number       output_time = 0.;
+    Number n_RI_timestep_ave = 0.;
+    Number glob_min_vertex_distance = 0.;
+    Number glob_max_vertex_distance = 0.;
+    Number min_vertex_distance = 0.;
+    Number wtime = 0.;
+    Number output_time = 0.;
     unsigned int timestep_number = 0;
     unsigned int timestep_number_RI = 0;
     unsigned int n_output = 0;
 
     // Prepare for output of initial conditions
     level_set_operator.compute_local_viscosity(solution);
-    //area = level_set_operator.compute_area(solution, 0, 0);
-    //circularity = level_set_operator.compute_circularity(solution, dof_handler);
+    // area = level_set_operator.compute_area(solution, 0, 0);
+    // circularity = level_set_operator.compute_circularity(solution, dof_handler);
 
     if (param.dynamic_sim)
     {
       TransportSpeed<dim> transport_speed(time, param);
       VectorTools::interpolate(dof_handler_vel,
-                              transport_speed,
-                              velocity);
+                               transport_speed,
+                               velocity);
       level_set_operator.set_velocity_vector(velocity);
     }
 
-    pcout << "          __         __               __    __  ___     "  << std::endl;
-    pcout << "   |     |__  \\  /  |__    |     _   |__   |__   |     "  << std::endl;
-    pcout << "   |__   |__   \\/   |__    |__        __|  |__   |     "  << std::endl;
+    pcout << "          __         __               __    __  ___     " << std::endl;
+    pcout << "   |     |__  \\  /  |__    |     _   |__   |__   |     " << std::endl;
+    pcout << "   |__   |__   \\/   |__    |__        __|  |__   |     " << std::endl;
     pcout << std::endl;
-    pcout << "                    is running ...                      "  << std::endl;
+    pcout << "                    is running ...                      " << std::endl;
     pcout << std::endl;
     pcout << std::endl;
-
-
 
     // Initialize time integrator and Runke-Kutta registers
     LinearAlgebra::distributed::Vector<Number> rk_register_1(solution), rk_register_2(solution);
     const LowStorageRungeKuttaIntegrators time_integrator(lsrk_scheme, param);
-        const AdvectionIntegratorConcretization advection_integrator(advection_operator,param, solution);
+    const AdvectionIntegratorConcretization advection_integrator(advection_operator, param, solution);
 
     // update minimum cell size for reinitialization time step calculation and refinement interval calculation
     min_vertex_distance = 0.;
     glob_min_vertex_distance = 0.;
     min_vertex_distance = std::numeric_limits<Number>::max();
-      for (const auto &cell : triangulation->active_cell_iterators())
-    min_vertex_distance = std::min(min_vertex_distance, cell->minimum_vertex_distance());
+    for (const auto &cell : triangulation->active_cell_iterators())
+      min_vertex_distance = std::min(min_vertex_distance, cell->minimum_vertex_distance());
     glob_min_vertex_distance = Utilities::MPI::min(min_vertex_distance, MPI_COMM_WORLD);
 
     // assume not refined initial mesh (glob_max_vertex_distance = glob_min_vertex_distance)
     glob_max_vertex_distance = glob_min_vertex_distance;
 
-    // Compute RI distance, 
+    // Compute RI distance,
     level_set_operator.compute_RI_distance(glob_max_vertex_distance);
     advection_operator.compute_RI_distance(glob_max_vertex_distance);
 
     // Do first level-set flattening process
-    //level_set_operator.flatten_level_set(solution);
+    // level_set_operator.flatten_level_set(solution);
 
-        // Output of initial data
+    // Output of initial data
     output_results(n_output++,
                    level_set_operator.compute_mass_and_energy(solution),
                    RI_indicator,
@@ -3374,26 +3252,23 @@ using AdvectionIntegratorConcretization = typename TimeIntegratorConcretization:
 
     LinearAlgebra::distributed::Vector<Number> initial_solution(solution);
 
-
     // calculate reinitialization time step size (char. velocity ~ 1.0) for first RI time step
     if (param.use_IMEX)
       time_step_RI = param.courant_number_RI * glob_min_vertex_distance / (fe_degree * fe_degree);
     else
-      time_step_RI = param.courant_number_RI / param.IP_diffusion / (std::pow(fe_degree, 2) / glob_min_vertex_distance + 
-                     level_set_operator.get_viscosity_value()  *
-                     std::pow(fe_degree, 4) / (glob_min_vertex_distance * glob_min_vertex_distance));
+      time_step_RI = param.courant_number_RI / param.IP_diffusion / (std::pow(fe_degree, 2) / glob_min_vertex_distance + level_set_operator.get_viscosity_value() * std::pow(fe_degree, 4) / (glob_min_vertex_distance * glob_min_vertex_distance));
 
     ////////////////////////////////////////////////////////////////////////
     ///////////////////////////// Time loop ////////////////////////////////
     ////////////////////////////////////////////////////////////////////////
     while (time < param.FINAL_TIME - 1e-12)
-      {
-        timer.restart();
+    {
+      timer.restart();
 
-        // update transport speed interpolation from analytical function
-        if (param.dynamic_sim)
+      // update transport speed interpolation from analytical function
+      if (param.dynamic_sim)
+      {
         {
-          {
           TimerOutput::Scope t(computing_timer, "Interpolate velocity field from analytical function");
 
           TransportSpeed<dim> transport_speed(time, param);
@@ -3402,10 +3277,10 @@ using AdvectionIntegratorConcretization = typename TimeIntegratorConcretization:
                                    velocity);
 
           level_set_operator.set_velocity_vector(velocity);
-          }
+        }
 
-          // update advection time step size
-          {
+        // update advection time step size
+        {
           TimerOutput::Scope t(computing_timer, "ADVECTION: Compute advection time step size");
 
           time_step_advection = level_set_operator.compute_time_step_advection();
@@ -3413,208 +3288,203 @@ using AdvectionIntegratorConcretization = typename TimeIntegratorConcretization:
           // ensure that FINAL_TIME is reached exactly with last time step
           if (time + time_step_advection > param.FINAL_TIME)
             time_step_advection = param.FINAL_TIME - time;
-          }
+        }
         advection_integrator.perform_time_step(time,
                                                time_step_advection,
                                                solution,
                                                rk_register_1,
                                                rk_register_2,
                                                computing_timer);
-         //time_integrator.perform_time_step(level_set_operator,
-         //                                  time,
-         //                                  time_step_advection,
-         //                                  solution,
-         //                                  rk_register_1,
-         //                                  rk_register_2,
-         //                                  computing_timer);
-        }
+        // time_integrator.perform_time_step(level_set_operator,
+        //                                   time,
+        //                                   time_step_advection,
+        //                                   solution,
+        //                                   rk_register_1,
+        //                                   rk_register_2,
+        //                                   computing_timer);
+      }
 
-        if(param.use_gradient_based_RI_indicator)
+      if (param.use_gradient_based_RI_indicator)
+      {
+        // Assert, static simulation makes no sense with gradient based RI-indicator
+        AssertThrow(param.dynamic_sim == true, ExcMessage("RI-indicator is not meaningful for pure reinitialization."));
+
         {
-          // Assert, static simulation makes no sense with gradient based RI-indicator
-          AssertThrow(param.dynamic_sim == true, ExcMessage("RI-indicator is not meaningful for pure reinitialization."));
-
-          {
           TimerOutput::Scope t(computing_timer, "RI: compute gradient-based RI indicator");
 
           level_set_operator.compute_RI_indicator(solution);
           RI_indicator = level_set_operator.get_RI_indicator();
-          }
-
-          if (RI_indicator > param.RI_quality_criteria)
-          {
-            level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
-            level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
-
-                for (unsigned int i = 0; i < param.RI_steps; i++)
-                {
-                  time_integrator.perform_time_step_RI(level_set_operator,
-                                                    time,
-                                                    time_step_RI,
-                                                    solution,
-                                                    rk_register_1,
-                                                    rk_register_2,
-                                                    num_Hamiltonian,
-                                                    Signum_smoothed,
-                                                    computing_timer);
-
-                  {
-                  TimerOutput::Scope t(computing_timer, "Flatten level set field");
-
-                  level_set_operator.flatten_level_set(solution);
-                  }
-                }
-
-                RI_counter += param.RI_steps;
-                timestep_number_RI += param.RI_steps;
-          }
         }
-        else
+
+        if (RI_indicator > param.RI_quality_criteria)
         {
-          if (timestep_number%param.RI_interval==0)
+          level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
+          level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
+
+          for (unsigned int i = 0; i < param.RI_steps; i++)
           {
-            if (param.dynamic_sim == false)
+            time_integrator.perform_time_step_RI(level_set_operator,
+                                                 time,
+                                                 time_step_RI,
+                                                 solution,
+                                                 rk_register_1,
+                                                 rk_register_2,
+                                                 num_Hamiltonian,
+                                                 Signum_smoothed,
+                                                 computing_timer);
+
             {
-              // in case of a static simulation, compute smoothed signum only once at the beginning
-              if (timestep_number == 0)
-              {
-                level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
-                level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
-              }
+              TimerOutput::Scope t(computing_timer, "Flatten level set field");
+
+              level_set_operator.flatten_level_set(solution);
             }
-            else
+          }
+
+          RI_counter += param.RI_steps;
+          timestep_number_RI += param.RI_steps;
+        }
+      }
+      else
+      {
+        if (timestep_number % param.RI_interval == 0)
+        {
+          if (param.dynamic_sim == false)
+          {
+            // in case of a static simulation, compute smoothed signum only once at the beginning
+            if (timestep_number == 0)
             {
               level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
               level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
             }
-
-
-                for (unsigned int i = 0; i < param.RI_steps; i++)
-                {
-                  time_integrator.perform_time_step_RI(level_set_operator,
-                                                    time,
-                                                    time_step_RI,
-                                                    solution,
-                                                    rk_register_1,
-                                                    rk_register_2,
-                                                    num_Hamiltonian,
-                                                    Signum_smoothed,
-                                                    computing_timer);
-                  
-                  {
-                  TimerOutput::Scope t(computing_timer, "Flatten level set field");
-
-                  level_set_operator.flatten_level_set(solution);
-                  }
-                }
-
-                RI_counter += param.RI_steps;
-                timestep_number_RI += param.RI_steps;
           }
-        }
-
-        if (param.dynamic_sim)
-        {
-          time += time_step_advection;
-        }
-        else
-        {
-          time += time_step_RI;
-        }
-        timestep_number++;
-        timestep_RI_counter++;
-
-
-        if (param.use_adaptive_mesh_refinement)
+          else
           {
-            if ((timestep_number % param.factor_refinement_interval) == 0)
-              {
-                {
-                TimerOutput::Scope t(computing_timer, "Compute local viscosity field for mesh refinement");
-                
-                // compute local viscosity value for mesh refinement criteria
-                level_set_operator.compute_local_viscosity(solution); 
-                }
-                
-                {
-                TimerOutput::Scope t(computing_timer, "Do adaptive mesh refinement");
-
-                refine_grid(level_set_operator, timestep_number, rk_register_1, rk_register_2, num_Hamiltonian, Signum_smoothed, God_grad, velocity);
-                level_set_operator.reinit_grad_vectors(solution);
-                level_set_operator.compute_penalty_parameter();
-
-                // update minimum cell size for reinitialization time step calculation and refinement interval calculation
-                min_vertex_distance = 0.;
-                glob_min_vertex_distance = 0.;
-                min_vertex_distance = std::numeric_limits<Number>::max();
-                  for (const auto &cell : triangulation->active_cell_iterators())
-                min_vertex_distance = std::min(min_vertex_distance, cell->minimum_vertex_distance());
-                glob_min_vertex_distance = Utilities::MPI::min(min_vertex_distance, MPI_COMM_WORLD);
-                }
-
-                // in the case of a static simulation with adaptive grid refinement, update signum function after mesh refinement
-                level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
-                level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
-
-                {
-                TimerOutput::Scope t(computing_timer, "RI: compute reinitialization time step size");
-                
-                // update reinitialization time step size (char. velocity ~ 1.0)
-                if (param.use_IMEX)
-                  time_step_RI = param.courant_number_RI * glob_min_vertex_distance / (fe_degree * fe_degree);
-                else
-                  time_step_RI = param.courant_number_RI / param.IP_diffusion / (std::pow(fe_degree, 2) / glob_min_vertex_distance + 
-                                 level_set_operator.get_viscosity_value() *
-                                 std::pow(fe_degree, 4) / (glob_min_vertex_distance * glob_min_vertex_distance));
-                }
-              }
+            level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
+            level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
           }
 
-        wtime += timer.wall_time();
-
-        timer.restart();
-
-        if (param.dynamic_sim)
-          time_step_output = time_step_advection;
-        else
-          time_step_output = time_step_RI;
-
-        if (static_cast<int>(time / (param.output_tick)) !=
-              static_cast<int>((time - time_step_output) / param.output_tick) ||
-            time >= param.FINAL_TIME - 1e-12)
+          for (unsigned int i = 0; i < param.RI_steps; i++)
           {
-            TimerOutput::Scope t(computing_timer, "Output results");
+            time_integrator.perform_time_step_RI(level_set_operator,
+                                                 time,
+                                                 time_step_RI,
+                                                 solution,
+                                                 rk_register_1,
+                                                 rk_register_2,
+                                                 num_Hamiltonian,
+                                                 Signum_smoothed,
+                                                 computing_timer);
 
-            level_set_operator.compute_local_viscosity(solution);
-            level_set_operator.compute_RI_indicator(solution);
-            RI_indicator = level_set_operator.get_RI_indicator();
-            //area = level_set_operator.compute_area(solution, 0, 0);
-            //circularity = level_set_operator.compute_circularity(solution, dof_handler);
-            n_RI_timestep_ave = (Number)RI_counter / (Number)timestep_RI_counter;
-            RI_indicator = level_set_operator.get_RI_indicator();
-            ave_CG_iterations = (Number) level_set_operator.get_CG_iterations()/RI_counter;
-            ave_cond_number = level_set_operator.get_cond_number()/RI_counter;
+            {
+              TimerOutput::Scope t(computing_timer, "Flatten level set field");
 
-            output_results(n_output++, 
-                           level_set_operator.compute_mass_and_energy(solution), 
-                           RI_indicator, 
-                           n_RI_timestep_ave, 
-                           area, 
-                           circularity, 
-                           time_step_advection, 
-                           time_step_RI,
-                           ave_CG_iterations,
-                           ave_cond_number);
-
-            level_set_operator.reset_CG_iterations();
-            level_set_operator.reset_cond_number();
-            timestep_RI_counter = 0;
-            RI_counter = 0;
+              level_set_operator.flatten_level_set(solution);
             }
-                
-        output_time += timer.wall_time();
+          }
+
+          RI_counter += param.RI_steps;
+          timestep_number_RI += param.RI_steps;
+        }
       }
 
+      if (param.dynamic_sim)
+      {
+        time += time_step_advection;
+      }
+      else
+      {
+        time += time_step_RI;
+      }
+      timestep_number++;
+      timestep_RI_counter++;
+
+      if (param.use_adaptive_mesh_refinement)
+      {
+        if ((timestep_number % param.factor_refinement_interval) == 0)
+        {
+          {
+            TimerOutput::Scope t(computing_timer, "Compute local viscosity field for mesh refinement");
+
+            // compute local viscosity value for mesh refinement criteria
+            level_set_operator.compute_local_viscosity(solution);
+          }
+
+          {
+            TimerOutput::Scope t(computing_timer, "Do adaptive mesh refinement");
+
+            refine_grid(level_set_operator, timestep_number, rk_register_1, rk_register_2, num_Hamiltonian, Signum_smoothed, God_grad, velocity);
+            level_set_operator.reinit_grad_vectors(solution);
+            level_set_operator.compute_penalty_parameter();
+
+            // update minimum cell size for reinitialization time step calculation and refinement interval calculation
+            min_vertex_distance = 0.;
+            glob_min_vertex_distance = 0.;
+            min_vertex_distance = std::numeric_limits<Number>::max();
+            for (const auto &cell : triangulation->active_cell_iterators())
+              min_vertex_distance = std::min(min_vertex_distance, cell->minimum_vertex_distance());
+            glob_min_vertex_distance = Utilities::MPI::min(min_vertex_distance, MPI_COMM_WORLD);
+          }
+
+          // in the case of a static simulation with adaptive grid refinement, update signum function after mesh refinement
+          level_set_operator.Godunov_gradient(solution, God_grad, computing_timer);
+          level_set_operator.Smoothed_signum(solution, Signum_smoothed, God_grad, computing_timer, glob_max_vertex_distance);
+
+          {
+            TimerOutput::Scope t(computing_timer, "RI: compute reinitialization time step size");
+
+            // update reinitialization time step size (char. velocity ~ 1.0)
+            if (param.use_IMEX)
+              time_step_RI = param.courant_number_RI * glob_min_vertex_distance / (fe_degree * fe_degree);
+            else
+              time_step_RI = param.courant_number_RI / param.IP_diffusion / (std::pow(fe_degree, 2) / glob_min_vertex_distance + level_set_operator.get_viscosity_value() * std::pow(fe_degree, 4) / (glob_min_vertex_distance * glob_min_vertex_distance));
+          }
+        }
+      }
+
+      wtime += timer.wall_time();
+
+      timer.restart();
+
+      if (param.dynamic_sim)
+        time_step_output = time_step_advection;
+      else
+        time_step_output = time_step_RI;
+
+      if (static_cast<int>(time / (param.output_tick)) !=
+              static_cast<int>((time - time_step_output) / param.output_tick) ||
+          time >= param.FINAL_TIME - 1e-12)
+      {
+        TimerOutput::Scope t(computing_timer, "Output results");
+
+        level_set_operator.compute_local_viscosity(solution);
+        level_set_operator.compute_RI_indicator(solution);
+        RI_indicator = level_set_operator.get_RI_indicator();
+        // area = level_set_operator.compute_area(solution, 0, 0);
+        // circularity = level_set_operator.compute_circularity(solution, dof_handler);
+        n_RI_timestep_ave = (Number)RI_counter / (Number)timestep_RI_counter;
+        RI_indicator = level_set_operator.get_RI_indicator();
+        ave_CG_iterations = (Number)level_set_operator.get_CG_iterations() / RI_counter;
+        ave_cond_number = level_set_operator.get_cond_number() / RI_counter;
+
+        output_results(n_output++,
+                       level_set_operator.compute_mass_and_energy(solution),
+                       RI_indicator,
+                       n_RI_timestep_ave,
+                       area,
+                       circularity,
+                       time_step_advection,
+                       time_step_RI,
+                       ave_CG_iterations,
+                       ave_cond_number);
+
+        level_set_operator.reset_CG_iterations();
+        level_set_operator.reset_cond_number();
+        timestep_RI_counter = 0;
+        RI_counter = 0;
+      }
+
+      output_time += timer.wall_time();
+    }
 
     pcout << std::endl
           << "   Level-set calculation has finished successfully." << std::endl;
@@ -3622,26 +3492,26 @@ using AdvectionIntegratorConcretization = typename TimeIntegratorConcretization:
     pcout << std::endl;
     if (param.dynamic_sim)
     {
-    pcout << "   Performed " << timestep_number << " advection time steps." << std::endl;
+      pcout << "   Performed " << timestep_number << " advection time steps." << std::endl;
     }
     pcout << "   Performed " << timestep_number_RI << " reinitialization time steps." << std::endl;
 
     if (param.use_gradient_based_RI_indicator && param.dynamic_sim)
     {
-      const Number ave_RI_steps_per_ADV_step = (Number) timestep_number_RI / timestep_number;
-      pcout << "   Average RI time steps per advection time step: " << std::setprecision(5) 
-      << ave_RI_steps_per_ADV_step << std::endl;
+      const Number ave_RI_steps_per_ADV_step = (Number)timestep_number_RI / timestep_number;
+      pcout << "   Average RI time steps per advection time step: " << std::setprecision(5)
+            << ave_RI_steps_per_ADV_step << std::endl;
     }
 
     if (param.dynamic_sim)
     {
-    pcout << "   Average wall clock time per advection time step: "
-          << wtime / timestep_number << std::endl;
+      pcout << "   Average wall clock time per advection time step: "
+            << wtime / timestep_number << std::endl;
     }
     else
     {
-    pcout << "   Average wall clock time per reinitialization time step: "
-          << wtime / timestep_number_RI << std::endl;
+      pcout << "   Average wall clock time per reinitialization time step: "
+            << wtime / timestep_number_RI << std::endl;
     }
 
     pcout << "   Spent " << output_time << "s on output and " << wtime
@@ -3649,18 +3519,18 @@ using AdvectionIntegratorConcretization = typename TimeIntegratorConcretization:
 
     // comment scope, if norm calculation is not required
     {
-    // compute error norm in the interval around a circular interface
-    const Number norm_interface = level_set_operator.compute_L2_norm_in_interface_region(param.FINAL_TIME,solution,initial_solution);
-    pcout << std::endl
-          << "   L2-Norm in zero level interface: "
-          << norm_interface << std::endl;
+      // compute error norm in the interval around a circular interface
+      const Number norm_interface = level_set_operator.compute_L2_norm_in_interface_region(param.FINAL_TIME, solution, initial_solution);
+      pcout << std::endl
+            << "   L2-Norm in zero level interface: "
+            << norm_interface << std::endl;
     }
 
     pcout << std::endl;
 
     computing_timer.print_summary();
     computing_timer.reset();
- 
+
     pcout << std::endl;
   }
 } // namespace LevelSet
@@ -3694,16 +3564,16 @@ int main(int argc, char *argv[])
         AdvectionRIProblem<2, 1> advect_problem(par);
         advect_problem.run();
       }
-       else if (par.fe_degree == 2)
-       {
-       AdvectionRIProblem<2,2> advect_problem(par);
-       advect_problem.run();
-       }
-       else if (par.fe_degree == 3)
-       {
-       AdvectionRIProblem<2,3> advect_problem(par);
-       advect_problem.run();
-       }
+      else if (par.fe_degree == 2)
+      {
+        AdvectionRIProblem<2, 2> advect_problem(par);
+        advect_problem.run();
+      }
+      else if (par.fe_degree == 3)
+      {
+        AdvectionRIProblem<2, 3> advect_problem(par);
+        advect_problem.run();
+      }
       else if (par.fe_degree == 4)
       {
         AdvectionRIProblem<2, 4> advect_problem(par);

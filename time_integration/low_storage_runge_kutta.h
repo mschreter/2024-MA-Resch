@@ -181,6 +181,7 @@ void local_apply_inverse_mass_matrix(
 
 
     pde_operator_.apply_operator(time, ki, ri);
+    pde_operator_.apply_dirichlet_boundary_operator(time, ki, ri);
 
     {
     TimerOutput::Scope t(computing_timer, "RI: apply inverse mass matrix");
