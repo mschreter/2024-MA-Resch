@@ -141,9 +141,8 @@ SmoothnessIndicator<dim, fe_degree>::
             ::dealii::internal::EvaluatorQuantity::value,
             dim,
             /*basis_size_1*/ degree + 1,
-            /*basis_size_2*/ degree + 1,
-            VectorizedArray<Number>,
-            Number>::do_forward(n_components,
+            /*basis_size_2*/ degree + 1
+            >::do_forward(n_components,
                                 linearized_matrix,
                                 phi_dgq.begin_dof_values(),
                                 phi_leg.begin_dof_values(),
